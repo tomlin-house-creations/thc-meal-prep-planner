@@ -179,7 +179,7 @@ def name(self) -> str:
 
 ### JSDoc Standard
 
-Use [JSDoc](https://jsdoc.app/) for all public APIs, interfaces, types, classes, and functions.
+Use [JSDoc](https://jsdoc.app/) for all public APIs, interfaces, types, classes, and functions (see exceptions below).
 
 ### Interface/Type Documentation
 

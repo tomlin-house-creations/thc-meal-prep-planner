@@ -29,7 +29,7 @@ Follow [PEP 8](https://pep8.org/) - the official Python style guide.
 #### Formatting
 
 - **Indentation**: 4 spaces (no tabs)
-- **Line Length**: Maximum 88 characters (Black formatter default)
+- **Line Length**: Maximum 88 characters (Black formatter default; note: PEP 8 recommends 79, but we use Black's 88 for better readability)
 - **Blank Lines**: 
   - 2 blank lines between top-level functions and classes
   - 1 blank line between methods in a class

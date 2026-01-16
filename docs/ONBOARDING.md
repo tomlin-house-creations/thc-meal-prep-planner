@@ -100,8 +100,8 @@ source venv/bin/activate
 # Install dependencies
 pip install -r requirements.txt
 
-# Run the application
-python main.py
+# Run the application (exact command will depend on project structure)
+python -m backend  # or python app.py, python main.py, etc.
 ```
 
 ### Frontend Setup (TypeScript/React)
