@@ -62,12 +62,19 @@ npm run dev
 
 ## Documentation
 
+### Getting Started
+- **[Onboarding Guide](docs/ONBOARDING.md)**: Getting started as a contributor
 - **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to this project
+
+### Standards & Guidelines  
 - **[Code Style Guide](CODE_STYLE.md)**: Coding standards for Python and TypeScript
 - **[Documentation Standards](docs/DOCUMENTATION_STANDARDS.md)**: Documentation requirements
-- **[Onboarding Guide](docs/ONBOARDING.md)**: Getting started as a contributor
+
+### Project Planning
+- **[Milestones Summary](docs/MILESTONES_SUMMARY.md)**: Quick reference for project status
 - **[Product Requirements Document](docs/PRD.md)**: Detailed product requirements and specifications
 - **[Project Roadmap](docs/ROADMAP.md)**: Development milestones and timeline
+- **[Milestone Tracking Guide](docs/MILESTONE_TRACKING.md)**: How to use the milestone system
 
 ## Contributing
 
