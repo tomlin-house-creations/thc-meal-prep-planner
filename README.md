@@ -66,6 +66,8 @@ npm run dev
 - **[Code Style Guide](CODE_STYLE.md)**: Coding standards for Python and TypeScript
 - **[Documentation Standards](docs/DOCUMENTATION_STANDARDS.md)**: Documentation requirements
 - **[Onboarding Guide](docs/ONBOARDING.md)**: Getting started as a contributor
+- **[Product Requirements Document](docs/PRD.md)**: Detailed product requirements and specifications
+- **[Project Roadmap](docs/ROADMAP.md)**: Development milestones and timeline
 
 ## Contributing
 
@@ -103,14 +105,18 @@ thc-meal-prep-planner/
 
 ## Roadmap
 
-- [ ] Define project architecture
-- [ ] Implement backend API
-- [ ] Create frontend application
-- [ ] Add user authentication
-- [ ] Implement recipe management
-- [ ] Build meal planning interface
-- [ ] Add shopping list generation
-- [ ] Integrate nutrition tracking
+For detailed project milestones, timeline, and release planning, see the [Project Roadmap](docs/ROADMAP.md).
+
+**Quick Overview**:
+
+- [x] Phase 1: Foundation & Documentation - In Progress
+- [ ] Phase 2: Repository Infrastructure
+- [ ] Phase 3: Backend Development
+- [ ] Phase 4: Frontend Development
+- [ ] Phase 5: CI/CD & Quality Assurance
+- [ ] Phase 6: MVP Release
+- [ ] Phase 7: v1.0 Release
+- [ ] Phase 8: Future Enhancements
 
 ## License
 
