@@ -1,0 +1,7 @@
+# THC Meal Prep Planner - Python Dependencies
+# 
+# This file contains the core runtime dependencies for the application.
+# For development dependencies, use: pip install -e ".[dev]"
+#
+# Note: Core dependencies will be added as development progresses.
+# The project uses pyproject.toml as the primary configuration.

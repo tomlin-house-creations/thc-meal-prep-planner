@@ -1,0 +1,8 @@
+# Constraints
+
+This directory will contain constraint definitions for meal planning such as dietary restrictions, budget limits, and time constraints.
+
+Example structure:
+- dietary_constraints.json
+- budget_constraints.json
+- time_constraints.json

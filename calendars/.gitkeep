@@ -1,0 +1,8 @@
+# Calendars
+
+This directory will contain meal calendar data showing planned meals for specific dates and times.
+
+Example structure:
+- weekly_calendars/
+- monthly_calendars/
+- calendar_templates/

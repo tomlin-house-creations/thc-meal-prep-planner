@@ -1,0 +1,7 @@
+# User Profiles
+
+This directory will contain user profile data including dietary preferences, restrictions, and settings.
+
+Example structure:
+- user_profiles.json
+- profile_schema.json
