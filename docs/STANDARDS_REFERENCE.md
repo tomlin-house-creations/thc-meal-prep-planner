@@ -162,9 +162,9 @@ def function_name(param1: type1, param2: type2) -> return_type:
  * 
  * Longer description if needed.
  * 
- * @param param1 - Description of param1
- * @param param2 - Description of param2
- * @returns Description of return value
+ * @param {Type1} param1 - Description of param1
+ * @param {Type2} param2 - Description of param2
+ * @returns {ReturnType} Description of return value
  * @throws {ErrorType} When this error occurs
  * 
  * @example
