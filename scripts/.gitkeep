@@ -1,0 +1,8 @@
+# Scripts
+
+This directory will contain utility scripts for data processing, imports, exports, and automation.
+
+Example structure:
+- import_recipes.py
+- export_meal_plan.py
+- generate_shopping_list.py

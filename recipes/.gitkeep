@@ -1,0 +1,8 @@
+# Recipes
+
+This directory will contain recipe definitions including ingredients, instructions, and nutritional information.
+
+Example structure:
+- recipe_database.json
+- recipe_schema.json
+- sample_recipes/

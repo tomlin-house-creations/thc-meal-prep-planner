@@ -1,0 +1,8 @@
+# History
+
+This directory will contain historical meal planning data for tracking and analytics purposes.
+
+Example structure:
+- meal_history.json
+- shopping_history.json
+- preference_trends.json

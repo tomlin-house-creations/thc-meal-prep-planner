@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "thc-meal-prep-planner"
+version = "0.1.0"
+description = "A comprehensive meal planning and preparation application"
+readme = "README.md"
+requires-python = ">=3.9"
+license = {text = "TBD"}
+authors = [
+    {name = "THC Meal Prep Planner Team"}
+]
+keywords = ["meal-planning", "recipes", "nutrition", "grocery-list"]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: End Users/Desktop",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+dependencies = [
+    # Core dependencies will be added as development progresses
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/tomlin-house-creations/thc-meal-prep-planner"
+Repository = "https://github.com/tomlin-house-creations/thc-meal-prep-planner"
+Documentation = "https://github.com/tomlin-house-creations/thc-meal-prep-planner/tree/main/docs"
+"Bug Tracker" = "https://github.com/tomlin-house-creations/thc-meal-prep-planner/issues"
+
+[tool.setuptools]
+# Package discovery will be configured when source code is added
+packages = []
+
+[tool.black]
+line-length = 88
+target-version = ['py39', 'py310', 'py311', 'py312', 'py313']
+include = '\.pyi?$'
+
+[tool.mypy]
+python_version = "3.9"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers"
+testpaths = ["tests"]

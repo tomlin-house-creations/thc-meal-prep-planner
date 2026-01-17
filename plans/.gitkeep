@@ -1,0 +1,8 @@
+# Plans
+
+This directory will contain generated meal plans including shopping lists and preparation schedules.
+
+Example structure:
+- active_plans/
+- archived_plans/
+- plan_templates/

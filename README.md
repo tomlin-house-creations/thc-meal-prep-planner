@@ -102,11 +102,20 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 ```
 thc-meal-prep-planner/
 ├── docs/                    # Documentation
-├── backend/                 # Python backend (planned)
-├── frontend/                # TypeScript/React frontend (planned)
+├── profiles/                # User profiles and preferences
+├── recipes/                 # Recipe database
+├── constraints/             # Planning constraints (dietary, budget, time)
+├── calendars/               # Meal calendars and schedules
+├── history/                 # Historical meal planning data
+├── plans/                   # Generated meal plans and shopping lists
+├── scripts/                 # Utility scripts
+├── site/                    # Built static site files
 ├── .github/                 # GitHub templates and workflows
+│   └── workflows/           # CI/CD workflows
 ├── CODE_STYLE.md           # Coding standards
 ├── CONTRIBUTING.md         # Contribution guidelines
+├── pyproject.toml          # Python project configuration
+├── requirements.txt        # Python dependencies
 └── README.md               # This file
 ```
 

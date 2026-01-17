@@ -56,7 +56,8 @@ venv.bak/
 .spyderproject
 .spyproject
 .ropeproject
-/site
+/site/*
+!/site/.gitkeep
 .mypy_cache/
 .dmypy.json
 dmypy.json
@@ -177,4 +178,3 @@ coverage/
 # Documentation builds
 docs/_build/
 docs/.doctrees/
-site/
