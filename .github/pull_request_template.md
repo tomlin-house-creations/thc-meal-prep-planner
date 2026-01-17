@@ -37,10 +37,11 @@ Please fill out this template to help reviewers understand your changes.
 
 ## Related Issues
 
-<!-- Link related issues using keywords like "Closes #123" or "Relates to #456" -->
+<!-- Link related issues using GitHub keywords.
+     Edit or remove the examples below as appropriate. -->
 
-Closes #
-Relates to #
+- Closes #123
+- Relates to #456
 
 ## Checklist
 

@@ -36,7 +36,7 @@ This repository maintains comprehensive standards to ensure code quality, consis
 
 #### Python
 - **Standard**: PEP 8
-- **Line Length**: 88 characters (Black default; deviates from PEP 8's 79 for better readability)
+- **Line Length**: 88 characters (team choice to use Black's default, prioritizing its consistent formatting over PEP 8's 79-character limit)
 - **Indentation**: 4 spaces
 - **Type Hints**: Required for all functions
 - **Documentation**: Google-style docstrings

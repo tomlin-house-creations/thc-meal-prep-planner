@@ -29,7 +29,7 @@ Follow [PEP 8](https://pep8.org/) - the official Python style guide.
 #### Formatting
 
 - **Indentation**: 4 spaces (no tabs)
-- **Line Length**: Maximum 88 characters (Black formatter default; note: PEP 8 recommends 79, but we use Black's 88 for better readability)
+- **Line Length**: Maximum 88 characters (team choice to use Black's default, prioritizing its consistent formatting over PEP 8's 79-character limit)
 - **Blank Lines**: 
   - 2 blank lines between top-level functions and classes
   - 1 blank line between methods in a class
@@ -236,9 +236,9 @@ Use JSDoc for all public functions, classes, and interfaces:
 /**
  * Calculates the nutritional information for a meal plan.
  * 
- * @param plan - The meal plan to analyze
- * @param options - Optional configuration for calculation
- * @returns Nutritional breakdown by category
+ * @param {MealPlan} plan - The meal plan to analyze
+ * @param {NutritionOptions} options - Optional configuration for calculation
+ * @returns {NutritionInfo} Nutritional breakdown by category
  * @throws {ValidationError} If the meal plan is invalid
  */
 function calculateNutrition(
