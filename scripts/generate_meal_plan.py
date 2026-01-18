@@ -208,8 +208,10 @@ def is_recipe_suitable(
         max_time = constraints["time"]["max_weekend_prep_minutes"]
 
     # Try to get the total time from the recipe
-    # Some recipes might not have this info, so we'll assume they're OK
-    total_time_str = recipe.get("Total Time", "30 minutes")
+    # If the recipe doesn't have time info, assume it fits within weeknight constraints
+    # (This is a reasonable default since most quick recipes don't specify time)
+    default_time = constraints["time"]["max_weeknight_prep_minutes"]
+    total_time_str = recipe.get("Total Time", f"{default_time} minutes")
 
     # Extract the number of minutes from strings like "35 minutes"
     time_match = re.search(r"(\d+)", total_time_str)
@@ -305,8 +307,11 @@ def generate_meal_plan(
                     recently_used.append(chosen_recipe.get("filename"))
 
                     # Keep the recently_used list from getting too long
-                    # Only remember the last 3 recipes
-                    if len(recently_used) > 3:
+                    # Use the variety constraint to determine how long to track
+                    max_recently_used = constraints.get("variety", {}).get(
+                        "min_days_between_repeats", 3
+                    )
+                    if len(recently_used) > max_recently_used:
                         recently_used.pop(0)
                 else:
                     # No suitable recipes found - note this in the plan
