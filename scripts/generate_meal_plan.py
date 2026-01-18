@@ -36,7 +36,7 @@ Created: 2026-01-18
 # IMPORTS - These are tools from other Python libraries we need
 # ==============================================================================
 
-import os  # For working with files and folders
+import random  # For adding variety to recipe selection
 import re  # For finding patterns in text (like extracting recipe info)
 import yaml  # For reading YAML configuration files
 from datetime import datetime, timedelta  # For working with dates
@@ -188,6 +188,9 @@ def is_recipe_suitable(
     Args:
         recipe: The recipe we're considering
         profile: The person's profile (allergies, preferences)
+                 NOTE: Not currently used in this simple version, but kept
+                 in the signature for future enhancements (allergy checking,
+                 dietary restrictions, etc.)
         is_weeknight: Is this a weeknight (Mon-Fri) or weekend?
         constraints: The planning rules
 
@@ -199,7 +202,7 @@ def is_recipe_suitable(
             print("This recipe works for a weeknight!")
     """
     # For this simple version, we just check cooking time
-    # In a real version, we'd also check for allergies, dietary restrictions, etc.
+    # Future: Add checks for profile allergies, dietary restrictions, preferences
 
     # Get the time limit based on whether it's a weeknight or weekend
     if is_weeknight:
@@ -297,10 +300,11 @@ def generate_meal_plan(
                     and r.get("filename") not in recently_used
                 ]
 
-                # If we have suitable recipes, pick the first one
-                # (In a real version, we might randomize or optimize this)
+                # If we have suitable recipes, pick one randomly
+                # This adds variety - each time you run the script, you might
+                # get a different meal plan!
                 if suitable_recipes:
-                    chosen_recipe = suitable_recipes[0]
+                    chosen_recipe = random.choice(suitable_recipes)
                     daily_meals[meal_type] = chosen_recipe
 
                     # Remember we used this recipe
@@ -503,6 +507,10 @@ def main() -> None:
     except FileNotFoundError as e:
         print(f"❌ Error: Could not find required file: {e}")
         print("   Make sure all necessary files exist in their folders.")
+    except yaml.YAMLError as e:
+        print("❌ Error: There is a problem with your YAML configuration file.")
+        print(f"   Details: {e}")
+        print("   Please check the formatting of your constraints file (for example, constraints/sample_constraints.yaml).")
     except Exception as e:
         print(f"❌ Error: Something went wrong: {e}")
         print("   Please check your input files and try again.")

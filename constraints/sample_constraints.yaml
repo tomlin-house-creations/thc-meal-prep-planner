@@ -25,10 +25,12 @@ budget:
 # Time Constraints
 time:
   # Maximum time to spend preparing meals on a weeknight
-  max_weeknight_prep_minutes: 30
+  # Allows some flexibility for recipes that might take a bit longer
+  max_weeknight_prep_minutes: 45
   
-  # Maximum time on weekend days (we have more time!)
-  max_weekend_prep_minutes: 60
+  # Maximum time on weekend days - set high for fancy recipes!
+  # If you want to do something elaborate, weekends are the time
+  max_weekend_prep_minutes: 180  # 3 hours for special weekend cooking
 
 # Variety Requirements
 # We don't want to eat the same thing every day!
