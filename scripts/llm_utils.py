@@ -358,8 +358,9 @@ def get_meal_suggestion(
                 # Clean up the suggestion more robustly
                 # Remove various quote types and extra whitespace
                 suggestion = suggestion.strip()
-                # Remove common quote patterns
-                for quote_char in ['"', "'", '"', '"', "'", "'"]:
+                # Remove common quote patterns (both ASCII and Unicode variants)
+                quote_chars = {'"', "'", '"', '"', "'", "'"}
+                for quote_char in quote_chars:
                     suggestion = suggestion.strip(quote_char)
                 # Final whitespace normalization
                 suggestion = " ".join(suggestion.split())

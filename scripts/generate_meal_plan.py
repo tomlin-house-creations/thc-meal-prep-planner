@@ -265,6 +265,29 @@ def is_recipe_suitable(
     return True  # Recipe is suitable!
 
 
+def extract_significant_words(text: str) -> list[str]:
+    """Extract significant words from text for matching purposes.
+    
+    Filters out short words (articles, prepositions) that don't help
+    identify specific recipes.
+    
+    Args:
+        text: The text to extract words from
+        
+    Returns:
+        List of significant words (length > MIN_WORD_LENGTH_FOR_MATCHING)
+        
+    Example:
+        words = extract_significant_words("The Grilled Chicken")
+        # Returns: ["grilled", "chicken"]
+    """
+    return [
+        word
+        for word in text.lower().split()
+        if len(word) > MIN_WORD_LENGTH_FOR_MATCHING
+    ]
+
+
 def select_meal_with_llm(
     meal_type: str,
     recipes: list[dict[str, Any]],
@@ -345,18 +368,19 @@ def select_meal_with_llm(
     # similar to one of our recipes, prefer that one
     if llm_suggestion:
         llm_lower = llm_suggestion.lower()
-        llm_words = [w for w in llm_lower.split() if len(w) > MIN_WORD_LENGTH_FOR_MATCHING]
+        llm_words = extract_significant_words(llm_suggestion)
         
         # Look for recipes that match the LLM suggestion
         for recipe in suitable_recipes:
-            recipe_title = recipe.get("title", "").lower()
-            recipe_words = [w for w in recipe_title.split() if len(w) > MIN_WORD_LENGTH_FOR_MATCHING]
+            recipe_title = recipe.get("title", "")
+            recipe_words = extract_significant_words(recipe_title)
+            recipe_lower = recipe_title.lower()
             
             # Check bidirectional matching: LLM words in recipe OR recipe words in LLM
             # This catches both "Chicken Teriyaki" -> "Teriyaki Chicken Bowl"
             # and "Grilled Salmon" -> "Salmon"
             if (
-                any(word in recipe_title for word in llm_words) or
+                any(word in recipe_lower for word in llm_words) or
                 any(word in llm_lower for word in recipe_words)
             ):
                 # Found a match! Use this recipe
