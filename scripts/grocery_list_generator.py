@@ -69,7 +69,6 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "zucchini",
         "squash",
         "mushroom",
-        "corn",
         "pea",
     ],
     "Meat": [
@@ -116,7 +115,8 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "salt",
         "black pepper",
         "white pepper",
-        "pepper",
+        "cayenne pepper",
+        "red pepper flakes",
         "spice",
         "seasoning",
         "rice",
@@ -159,6 +159,7 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
     "Bakery": [
         "bread",
         "tortilla",
+        "tortillas",
         "bagel",
         "muffin",
         "roll",
@@ -397,6 +398,15 @@ def categorize_ingredient(ingredient_name: str) -> str:
     Uses keyword matching to determine which section of the grocery store
     an ingredient belongs to (e.g., Produce, Meat, Dairy).
 
+    Categories are checked in priority order to handle ambiguous matches:
+    1. Bakery (tortillas, bread) - checked first for specific items
+    2. Meat - specific protein items
+    3. Dairy - eggs, milk, cheese
+    4. Pantry - dried/canned goods, spices, oils
+    5. Frozen - frozen items
+    6. Produce - fresh vegetables and fruits (checked later to avoid conflicts)
+    7. Other - fallback for unmatched items
+
     Args:
         ingredient_name: Name of the ingredient to categorize
 
@@ -410,14 +420,21 @@ def categorize_ingredient(ingredient_name: str) -> str:
         'Meat'
         >>> categorize_ingredient("cheddar cheese")
         'Dairy'
+        >>> categorize_ingredient("corn tortillas")
+        'Bakery'
     """
     ingredient_lower = ingredient_name.lower()
 
-    # Check each category for matching keywords
-    for category, keywords in CATEGORY_KEYWORDS.items():
-        for keyword in keywords:
-            if keyword in ingredient_lower:
-                return category
+    # Check categories in priority order to avoid ambiguous matches
+    # Order matters! More specific categories should be checked first
+    priority_order = ["Bakery", "Meat", "Dairy", "Frozen", "Pantry", "Produce"]
+
+    for category in priority_order:
+        if category in CATEGORY_KEYWORDS:
+            keywords = CATEGORY_KEYWORDS[category]
+            for keyword in keywords:
+                if keyword in ingredient_lower:
+                    return category
 
     # Default to "Other" if no category match found
     return "Other"
