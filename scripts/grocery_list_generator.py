@@ -45,7 +45,6 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "cucumber",
         "onion",
         "garlic",
-        "pepper",
         "bell pepper",
         "carrot",
         "celery",
@@ -115,6 +114,8 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "flour",
         "sugar",
         "salt",
+        "black pepper",
+        "white pepper",
         "pepper",
         "spice",
         "seasoning",
@@ -303,12 +304,12 @@ def normalize_unit(unit: str) -> str:
     """
     unit_lower = unit.lower()
 
-    # Tablespoon variations
-    if unit_lower in ["tbsp", "tbs", "tb", "t", "tablespoon", "tablespoons"]:
+    # Tablespoon variations (note: 'T' is capital for tablespoon, 't' for teaspoon)
+    if unit_lower in ["tbsp", "tbs", "tb", "tablespoon", "tablespoons"]:
         return "tablespoon"
 
     # Teaspoon variations
-    if unit_lower in ["tsp", "ts", "teaspoon", "teaspoons"]:
+    if unit_lower in ["tsp", "ts", "t", "teaspoon", "teaspoons"]:
         return "teaspoon"
 
     # Cup variations
