@@ -63,14 +63,51 @@ python scripts/generate_meal_plan.py
 - Loads a sample user profile from `profiles/ashuah.md`
 - Reads available recipes from `recipes/`
 - Applies constraints from `constraints/sample_constraints.yaml`
+- Uses LLM for creative suggestions (if API key is configured)
 - Generates a weekly meal plan in `plans/meal_plan_YYYY-MM-DD.md`
 
 **To customize:**
 - Add more recipes to `recipes/` folder (use `breakfast-burritos.md` as a template)
 - Create your own profile in `profiles/` folder
 - Adjust planning rules in `constraints/sample_constraints.yaml`
+- Enable LLM features (see [LLM Integration](#llm-integration) below)
 
 The script includes thorough ELI5 (Explain Like I'm 5) documentation, making it perfect for learning how the system works!
+
+### LLM Integration
+
+The meal plan generator can use AI (GPT) to provide creative meal suggestions while maintaining all constraints.
+
+#### Enabling LLM Features
+
+**Local Development:**
+
+Set the `OPENAI_API_KEY` environment variable:
+
+```bash
+export OPENAI_API_KEY="sk-your-api-key-here"
+python scripts/generate_meal_plan.py
+```
+
+**GitHub Actions:**
+
+1. Navigate to your repository settings
+2. Go to **Secrets and variables** → **Actions**
+3. Click **New repository secret**
+4. Name: `OPENAI_API_KEY`
+5. Value: Your OpenAI API key (starts with `sk-`)
+6. Click **Add secret**
+
+The CI workflow is already configured to use this secret automatically.
+
+#### How LLM Integration Works
+
+- **Creative Suggestions**: GPT proposes meal ideas based on your preferences
+- **Constraint Compliance**: All suggestions must pass hard constraint validation
+- **Graceful Fallback**: If LLM is unavailable, the generator uses deterministic selection
+- **Recipe Matching**: LLM suggestions are matched to available recipes in your database
+
+**Note**: The script works perfectly without an API key - LLM features are optional!
 
 ## Documentation
 

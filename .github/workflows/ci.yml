@@ -16,9 +16,27 @@ jobs:
     permissions:
       contents: read
     
+    # Environment variables from repository secrets
+    # To use LLM features in CI, add OPENAI_API_KEY to repository secrets:
+    # Settings -> Secrets and variables -> Actions -> New repository secret
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
       
     - name: Placeholder step
       run: echo "CI workflow placeholder - to be configured"
+      
+    # Example: Future step to test meal plan generation with LLM
+    # - name: Set up Python
+    #   uses: actions/setup-python@v5
+    #   with:
+    #     python-version: '3.9'
+    #
+    # - name: Install dependencies
+    #   run: pip install -r requirements.txt
+    #
+    # - name: Generate meal plan
+    #   run: python scripts/generate_meal_plan.py
