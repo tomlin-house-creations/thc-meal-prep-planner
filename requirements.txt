@@ -8,3 +8,6 @@
 
 # YAML parsing for configuration files
 PyYAML>=6.0.0
+
+# OpenAI API for LLM-powered meal suggestions
+openai>=1.0.0

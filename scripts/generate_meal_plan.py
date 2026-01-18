@@ -10,8 +10,9 @@ What does this script do?
 1. Reads your profile (who you are, what you like/dislike)
 2. Loads available recipes (meals you can make)
 3. Reads constraints (rules for planning, like time limits)
-4. Creates a weekly meal plan (7 days of breakfast, lunch, dinner)
-5. Saves the plan as a Markdown file
+4. Optionally uses LLM (GPT) for creative meal suggestions
+5. Creates a weekly meal plan (7 days of breakfast, lunch, dinner)
+6. Saves the plan as a Markdown file
 
 How to use this script:
 -----------------------
@@ -21,7 +22,16 @@ That's it! The script will:
 - Use the sample profile in profiles/ashuah.md
 - Look at all recipes in the recipes/ folder
 - Follow rules in constraints/sample_constraints.yaml
+- Use LLM for suggestions if OPENAI_API_KEY is set
 - Create a meal plan in plans/meal_plan_YYYY-MM-DD.md
+
+LLM Integration:
+----------------
+To enable LLM-powered meal suggestions, set the OPENAI_API_KEY environment variable:
+    export OPENAI_API_KEY="sk-..."
+
+Or in GitHub Actions, add it as a repository secret and reference in the workflow.
+The script will work without LLM - it will just use deterministic recipe selection.
 
 What is ELI5?
 -------------
@@ -30,6 +40,7 @@ so anyone can understand how this works, even if you're new to programming!
 
 Author: THC Meal Prep Planner Team
 Created: 2026-01-18
+Updated: 2026-01-18 (Added LLM integration)
 """
 
 # ==============================================================================
@@ -41,7 +52,26 @@ import re  # For finding patterns in text (like extracting recipe info)
 import yaml  # For reading YAML configuration files
 from datetime import datetime, timedelta  # For working with dates
 from pathlib import Path  # For handling file paths in a smart way
-from typing import Any  # For type hints (helps catch bugs)
+from typing import Any, Optional  # For type hints (helps catch bugs)
+
+# Import our LLM utility module for AI-powered meal suggestions
+# This is in a try/except so the script still works if llm_utils isn't available
+try:
+    from llm_utils import get_meal_suggestion, get_llm_status_message
+    LLM_UTILS_AVAILABLE = True
+except ImportError:
+    LLM_UTILS_AVAILABLE = False
+    # If import fails, we'll just use deterministic selection
+
+
+# ==============================================================================
+# CONFIGURATION - Settings for meal plan generation
+# ==============================================================================
+
+# Minimum word length to consider when matching LLM suggestions to recipes
+# Words shorter than this are typically articles/prepositions (e.g., "a", "the", "of")
+# and don't help identify the specific recipe
+MIN_WORD_LENGTH_FOR_MATCHING = 3
 
 
 # ==============================================================================
@@ -235,6 +265,152 @@ def is_recipe_suitable(
     return True  # Recipe is suitable!
 
 
+def extract_significant_words(text: str) -> list[str]:
+    """Extract significant words from text for matching purposes.
+    
+    Filters out short words (articles, prepositions) that don't help
+    identify specific recipes.
+    
+    Args:
+        text: The text to extract words from
+        
+    Returns:
+        List of significant words (length >= MIN_WORD_LENGTH_FOR_MATCHING)
+        
+    Example:
+        words = extract_significant_words("The Grilled Chicken")
+        # Returns: ["grilled", "chicken"]
+        words = extract_significant_words("Green Tea")
+        # Returns: ["green", "tea"]
+    """
+    return [
+        word
+        for word in text.lower().split()
+        if len(word) >= MIN_WORD_LENGTH_FOR_MATCHING
+    ]
+
+
+def select_meal_with_llm(
+    meal_type: str,
+    recipes: list[dict[str, Any]],
+    profile: dict[str, Any],
+    is_weeknight: bool,
+    constraints: dict[str, Any],
+    recently_used: list[str],
+) -> Optional[dict[str, Any]]:
+    """Select a meal using LLM suggestions when available, with constraint validation.
+    
+    This function blends AI creativity with deterministic constraints:
+    1. Try to get an LLM suggestion for a meal
+    2. If we get a suggestion, use it as inspiration
+    3. Always fall back to deterministic selection from available recipes
+    4. All selections must pass constraint validation
+    
+    The LLM provides ideas, but the code enforces all hard rules!
+    
+    Args:
+        meal_type: Type of meal (breakfast, lunch, dinner)
+        recipes: List of available recipe dictionaries
+        profile: User profile with preferences
+        is_weeknight: True for weeknight, False for weekend
+        constraints: Planning constraints
+        recently_used: List of recently used recipe filenames
+        
+    Returns:
+        Selected recipe dictionary, or None if no suitable recipe found
+        
+    Example:
+        recipe = select_meal_with_llm(
+            "dinner",
+            all_recipes,
+            user_profile,
+            is_weeknight=True,
+            constraints,
+            ["breakfast-burritos.md"]
+        )
+    """
+    # First, filter recipes to only those that meet hard constraints
+    suitable_recipes = [
+        r
+        for r in recipes
+        if r.get("Category", "").lower() == meal_type
+        and is_recipe_suitable(r, profile, is_weeknight, constraints)
+        and r.get("filename") not in recently_used
+    ]
+    
+    # If no suitable recipes, return None
+    if not suitable_recipes:
+        return None
+    
+    # Try to get LLM suggestion if available
+    llm_suggestion = None
+    if LLM_UTILS_AVAILABLE:
+        # Get recently used meal titles (not filenames) for context
+        recently_used_titles = []
+        for filename in recently_used:
+            # Find the recipe with this filename
+            for r in recipes:
+                if r.get("filename") == filename:
+                    title = r.get("title")
+                    if title:
+                        recently_used_titles.append(title)
+                    break
+        
+        # Get LLM suggestion
+        llm_suggestion = get_meal_suggestion(
+            meal_type,
+            profile,
+            constraints,
+            is_weeknight,
+            recently_used_titles,
+        )
+    
+    # If we got an LLM suggestion, try to find a matching recipe
+    # We do a simple string matching - if the LLM suggests something
+    # similar to one of our recipes, prefer that one
+    if llm_suggestion:
+        llm_lower = llm_suggestion.lower()
+        llm_words = extract_significant_words(llm_suggestion)
+        
+        # Look for recipes that match the LLM suggestion
+        for recipe in suitable_recipes:
+            recipe_title = recipe.get("title", "")
+            recipe_words = extract_significant_words(recipe_title)
+            recipe_lower = recipe_title.lower()
+            
+            # Check bidirectional word matching: LLM words in recipe OR recipe words in LLM
+            # This catches both "Chicken Teriyaki" -> "Teriyaki Chicken Bowl"
+            # and "Grilled Salmon" -> "Salmon"
+            if (
+                any(word in recipe_lower for word in llm_words) or
+                any(word in llm_lower for word in recipe_words)
+            ):
+                # Found a match! Use this recipe
+                print(f"   🤖 LLM suggested '{llm_suggestion}', "
+                      f"matched with recipe: {recipe.get('title')}")
+                return recipe
+            
+            # Per-recipe fallback: If word-based matching failed for this recipe,
+            # try exact substring matching between the LLM suggestion and this title.
+            # This handles cases like "Tea" matching "Green Tea" or "Pie" -> "Pi",
+            # even when other recipes have significant words.
+            if llm_lower in recipe_lower or recipe_lower in llm_lower:
+                print(f"   🤖 LLM suggested '{llm_suggestion}', "
+                      f"matched with recipe (substring): {recipe.get('title')}")
+                return recipe
+    
+    # If no LLM suggestion or no matching recipe, use random selection
+    # This is the original deterministic behavior
+    chosen = random.choice(suitable_recipes)
+    
+    # If we had an LLM suggestion but no match, note it
+    if llm_suggestion:
+        print(f"   🤖 LLM suggested '{llm_suggestion}' "
+              f"(no matching recipe, using: {chosen.get('title')})")
+    
+    return chosen
+
+
 def generate_meal_plan(
     profile: dict[str, Any],
     recipes: list[dict[str, Any]],
@@ -319,21 +495,19 @@ def generate_meal_plan(
             needed = constraints["meals_per_day"].get(meal_type, 0)
 
             if needed > 0:
-                # Find a suitable recipe for this meal
-                # Filter recipes by category
-                suitable_recipes = [
-                    r
-                    for r in recipes
-                    if r.get("Category", "").lower() == meal_type
-                    and is_recipe_suitable(r, profile, is_weeknight, constraints)
-                    and r.get("filename") not in recently_used
-                ]
-
-                # If we have suitable recipes, pick one randomly
-                # This adds variety - each time you run the script, you might
-                # get a different meal plan!
-                if suitable_recipes:
-                    chosen_recipe = random.choice(suitable_recipes)
+                # Use LLM-aware meal selection
+                # This will try to use LLM suggestions when available,
+                # but always fall back to deterministic selection
+                chosen_recipe = select_meal_with_llm(
+                    meal_type,
+                    recipes,
+                    profile,
+                    is_weeknight,
+                    constraints,
+                    recently_used,
+                )
+                
+                if chosen_recipe:
                     daily_meals[meal_type] = chosen_recipe
 
                     # Remember we used this recipe
@@ -479,6 +653,11 @@ def main() -> None:
     print("🍽️  THC Meal Prep Planner - Meal Plan Generator")
     print("=" * 70)
     print()
+    
+    # Display LLM status
+    if LLM_UTILS_AVAILABLE:
+        print(get_llm_status_message())
+        print()
 
     # Figure out where all the files are
     # We use Path(__file__) to find where this script is located
