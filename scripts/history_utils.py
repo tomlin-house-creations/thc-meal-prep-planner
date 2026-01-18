@@ -79,10 +79,15 @@ def save_plan_to_history(
     for day_name, meals in meal_plan.get("week", {}).items():
         history_entry["meals"][day_name] = {}
         for meal_type, recipe in meals.items():
+            # Only store actual recipes that have an associated filename
+            recipe_filename = recipe.get("filename") if isinstance(recipe, dict) else None
+            if not recipe_filename:
+                # Skip placeholder or missing recipes without a backing file
+                continue
             # Store key recipe information
             history_entry["meals"][day_name][meal_type] = {
                 "title": recipe.get("title"),
-                "filename": recipe.get("filename"),
+                "filename": recipe_filename,
                 "category": recipe.get("Category"),
                 "cuisine": recipe.get("Cuisine"),
             }

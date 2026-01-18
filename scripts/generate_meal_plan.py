@@ -68,7 +68,6 @@ try:
     from history_utils import (
         save_plan_to_history,
         get_recently_used_recipes,
-        days_since_recipe_used,
     )
     HISTORY_UTILS_AVAILABLE = True
 except ImportError:
@@ -226,13 +225,18 @@ def load_constraints(constraints_path: Path) -> dict[str, Any]:
 
 
 def is_recipe_suitable(
-    recipe: dict[str, Any], profile: dict[str, Any], is_weeknight: bool, constraints: dict[str, Any]
+    recipe: dict[str, Any],
+    profile: dict[str, Any],
+    is_weeknight: bool,
+    constraints: dict[str, Any],
+    day_name: str = "",
 ) -> bool:
     """Check if a recipe is suitable for a person and day.
 
     This is like asking: "Can this person eat this meal on this day?"
     We check things like:
     - Does it take too long to cook for a weeknight?
+    - Is this a no-cook night and the recipe takes too long?
     - Does it contain ingredients the person is allergic to?
 
     Args:
@@ -243,46 +247,141 @@ def is_recipe_suitable(
                  dietary restrictions, etc.)
         is_weeknight: Is this a weeknight (Mon-Fri) or weekend?
         constraints: The planning rules
+        day_name: Name of the day (for no-cook night checking)
 
     Returns:
         True if the recipe is OK to use, False if not
 
     Example:
-        if is_recipe_suitable(recipe, profile, True, constraints):
+        if is_recipe_suitable(recipe, profile, True, constraints, "Monday"):
             print("This recipe works for a weeknight!")
     """
-    # For this simple version, we just check cooking time
-    # Future: Add checks for profile allergies, dietary restrictions, preferences
-
     # Get the time constraints with validation
     time_constraints = constraints.get("time")
     if not isinstance(time_constraints, dict):
         raise ValueError("Constraints file is missing required 'time' section.")
     
-    # Get the time limit based on whether it's a weeknight or weekend
+    # Get the default time for recipes without time info
+    try:
+        default_time = time_constraints["max_weeknight_prep_minutes"]
+    except KeyError as exc:
+        raise KeyError(
+            f"Constraints file is missing required key 'time.max_weeknight_prep_minutes'."
+        ) from exc
+    
+    # Extract recipe preparation time
+    total_time_str = recipe.get("Total Time", f"{default_time} minutes")
+    time_match = re.search(r"(\d+)", total_time_str)
+    recipe_time = int(time_match.group(1)) if time_match else default_time
+    
+    # Check for no-cook nights constraint
+    no_cook_config = time_constraints.get("no_cook_nights", {})
+    if no_cook_config.get("enabled", False) and day_name:
+        no_cook_days = no_cook_config.get("days", [])
+        if day_name in no_cook_days:
+            max_no_cook_time = no_cook_config.get("max_prep_minutes", 10)
+            if recipe_time > max_no_cook_time:
+                return False  # Too much cooking for a no-cook night!
+    
+    # Check regular time constraints
     try:
         if is_weeknight:
             max_time = time_constraints["max_weeknight_prep_minutes"]
         else:
             max_time = time_constraints["max_weekend_prep_minutes"]
-        
-        # Also get the default time for recipes without time info
-        default_time = time_constraints["max_weeknight_prep_minutes"]
     except KeyError as exc:
         missing_key = exc.args[0]
         raise KeyError(
             f"Constraints file is missing required key 'time.{missing_key}'."
         ) from exc
-    total_time_str = recipe.get("Total Time", f"{default_time} minutes")
-
-    # Extract the number of minutes from strings like "35 minutes"
-    time_match = re.search(r"(\d+)", total_time_str)
-    if time_match:
-        recipe_time = int(time_match.group(1))
-        if recipe_time > max_time:
-            return False  # Too long to cook!
+    
+    if recipe_time > max_time:
+        return False  # Too long to cook!
 
     return True  # Recipe is suitable!
+
+
+def check_blocking_constraints(
+    recipe: dict[str, Any],
+    recently_used_recipes: list[dict[str, Any]],
+    constraints: dict[str, Any],
+) -> bool:
+    """Check if a recipe violates blocking constraints.
+    
+    Checks protein blocking, cuisine blocking, and cooking method blocking
+    to prevent repetitive patterns.
+    
+    Args:
+        recipe: The recipe to check
+        recently_used_recipes: List of recently used recipe dictionaries
+        constraints: The constraints dictionary
+        
+    Returns:
+        True if recipe passes blocking checks, False if blocked
+        
+    Example:
+        if check_blocking_constraints(recipe, recent, constraints):
+            print("Recipe passes blocking checks")
+    """
+    blocking_config = constraints.get("blocking", {})
+    
+    # Check protein blocking
+    protein_blocking = blocking_config.get("protein_blocking", {})
+    if protein_blocking.get("enabled", False):
+        max_consecutive = protein_blocking.get("max_consecutive_days", 1)
+        protein_types = protein_blocking.get("protein_types", [])
+        recipe_protein = recipe.get("Protein", "")
+        
+        if recipe_protein in protein_types:
+            # Count consecutive days with same protein
+            consecutive_count = 0
+            for past_recipe in reversed(recently_used_recipes[-max_consecutive:]):
+                if past_recipe.get("Protein") == recipe_protein:
+                    consecutive_count += 1
+                else:
+                    break
+            
+            if consecutive_count >= max_consecutive:
+                return False  # Too many consecutive days with this protein
+    
+    # Check cuisine blocking
+    cuisine_blocking = blocking_config.get("cuisine_blocking", {})
+    if cuisine_blocking.get("enabled", False):
+        max_consecutive = cuisine_blocking.get("max_consecutive_days", 2)
+        recipe_cuisine = recipe.get("Cuisine", "")
+        
+        if recipe_cuisine:
+            # Count consecutive days with same cuisine
+            consecutive_count = 0
+            for past_recipe in reversed(recently_used_recipes[-max_consecutive:]):
+                if past_recipe.get("Cuisine") == recipe_cuisine:
+                    consecutive_count += 1
+                else:
+                    break
+            
+            if consecutive_count >= max_consecutive:
+                return False  # Too many consecutive days with this cuisine
+    
+    # Check cooking method blocking
+    method_blocking = blocking_config.get("cooking_method_blocking", {})
+    if method_blocking.get("enabled", False):
+        max_consecutive = method_blocking.get("max_consecutive_days", 2)
+        methods = method_blocking.get("methods", [])
+        recipe_method = recipe.get("Method", "")
+        
+        if recipe_method in methods:
+            # Count consecutive days with same method
+            consecutive_count = 0
+            for past_recipe in reversed(recently_used_recipes[-max_consecutive:]):
+                if past_recipe.get("Method") == recipe_method:
+                    consecutive_count += 1
+                else:
+                    break
+            
+            if consecutive_count >= max_consecutive:
+                return False  # Too many consecutive days with this method
+    
+    return True  # Passes all blocking checks
 
 
 def extract_significant_words(text: str) -> list[str]:
@@ -317,6 +416,8 @@ def select_meal_with_llm(
     is_weeknight: bool,
     constraints: dict[str, Any],
     recently_used: list[str],
+    day_name: str = "",
+    recently_used_recipes_dict: list[dict[str, Any]] = None,
 ) -> Optional[dict[str, Any]]:
     """Select a meal using LLM suggestions when available, with constraint validation.
     
@@ -324,7 +425,7 @@ def select_meal_with_llm(
     1. Try to get an LLM suggestion for a meal
     2. If we get a suggestion, use it as inspiration
     3. Always fall back to deterministic selection from available recipes
-    4. All selections must pass constraint validation
+    4. All selections must pass constraint validation including blocking
     
     The LLM provides ideas, but the code enforces all hard rules!
     
@@ -335,6 +436,8 @@ def select_meal_with_llm(
         is_weeknight: True for weeknight, False for weekend
         constraints: Planning constraints
         recently_used: List of recently used recipe filenames
+        day_name: Name of the day (for no-cook night checking)
+        recently_used_recipes_dict: List of recently used recipe dicts (for blocking)
         
     Returns:
         Selected recipe dictionary, or None if no suitable recipe found
@@ -346,16 +449,21 @@ def select_meal_with_llm(
             user_profile,
             is_weeknight=True,
             constraints,
-            ["breakfast-burritos.md"]
+            ["breakfast-burritos.md"],
+            "Monday"
         )
     """
+    if recently_used_recipes_dict is None:
+        recently_used_recipes_dict = []
+    
     # First, filter recipes to only those that meet hard constraints
     suitable_recipes = [
         r
         for r in recipes
         if r.get("Category", "").lower() == meal_type
-        and is_recipe_suitable(r, profile, is_weeknight, constraints)
+        and is_recipe_suitable(r, profile, is_weeknight, constraints, day_name)
         and r.get("filename") not in recently_used
+        and check_blocking_constraints(r, recently_used_recipes_dict, constraints)
     ]
     
     # If no suitable recipes, return None
@@ -436,7 +544,7 @@ def generate_meal_plan(
     recipes: list[dict[str, Any]],
     constraints: dict[str, Any],
     history_dir: Optional[Path] = None,
-) -> dict[str, Any]:
+) -> tuple[dict[str, Any], list[str]]:
     """Generate a weekly meal plan.
 
     This is the main function that creates the meal plan! It picks recipes
@@ -455,10 +563,10 @@ def generate_meal_plan(
         history_dir: Optional directory containing meal plan history
 
     Returns:
-        A dictionary with the complete meal plan
+        A tuple of (meal_plan dict, list of recently used recipe filenames from history)
 
     Example:
-        plan = generate_meal_plan(profile, recipes, constraints)
+        plan, history_used = generate_meal_plan(profile, recipes, constraints)
         print(plan['week']['Monday']['breakfast']['title'])
     """
     print("\n🎯 Generating meal plan...")
@@ -498,6 +606,7 @@ def generate_meal_plan(
 
     # Keep track of recently used recipes to avoid repetition
     recently_used = []
+    recently_used_recipes_dict = []  # Track full recipe objects for blocking constraints
     
     # Load history if available and enabled
     history_recently_used = []
@@ -543,6 +652,8 @@ def generate_meal_plan(
                     is_weeknight,
                     constraints,
                     recently_used,
+                    day_name,
+                    recently_used_recipes_dict,
                 )
                 
                 if chosen_recipe:
@@ -551,8 +662,9 @@ def generate_meal_plan(
                     # Remember we used this recipe (only from current week, not history)
                     if chosen_recipe.get("filename") not in history_recently_used:
                         recently_used.append(chosen_recipe.get("filename"))
+                        recently_used_recipes_dict.append(chosen_recipe)
 
-                    # Keep the recently_used list from getting too long
+                    # Keep the recently_used lists from getting too long
                     # Use the variety constraint to determine how long to track
                     max_recently_used = constraints.get("variety", {}).get(
                         "min_days_between_repeats", 3
@@ -568,6 +680,9 @@ def generate_meal_plan(
                         if non_history_items:
                             items_to_keep.extend(non_history_items[1:])
                         recently_used = items_to_keep
+                        # Also trim the recipes_dict accordingly
+                        if len(recently_used_recipes_dict) > max_recently_used:
+                            recently_used_recipes_dict = recently_used_recipes_dict[-max_recently_used:]
                 else:
                     # No suitable recipes found - note this in the plan
                     daily_meals[meal_type] = {
@@ -582,7 +697,7 @@ def generate_meal_plan(
         current_date += timedelta(days=1)
 
     print("   ✅ Meal plan generated successfully!")
-    return meal_plan
+    return meal_plan, history_recently_used
 
 
 def format_meal_plan_as_markdown(
@@ -768,7 +883,7 @@ def main() -> None:
         constraints = load_constraints(constraints_path)
 
         # Step 4: Generate the meal plan (with history integration)
-        meal_plan = generate_meal_plan(profile, recipes, constraints, history_dir)
+        meal_plan, history_recently_used = generate_meal_plan(profile, recipes, constraints, history_dir)
 
         # Step 5: Calculate variety score if enabled
         score = None
@@ -776,19 +891,7 @@ def main() -> None:
             scoring_config = constraints.get("scoring", {})
             if scoring_config.get("enabled", False):
                 print("\n📊 Calculating variety score...")
-                # Get list of recently used recipe filenames for scoring
-                history_recently_used = []
-                if HISTORY_UTILS_AVAILABLE:
-                    history_config = constraints.get("history", {})
-                    if history_config.get("enabled", False):
-                        recent_from_history = get_recently_used_recipes(
-                            history_dir,
-                            days_back=history_config.get("ttl_days", 30),
-                        )
-                        history_recently_used = [
-                            r["filename"] for r in recent_from_history if r.get("filename")
-                        ]
-                
+                # Use the history list returned from generation (no duplicate loading)
                 score = calculate_meal_plan_score(meal_plan, constraints, history_recently_used)
                 print(f"   Score: {score['total_score']} ({score['grade']})")
 

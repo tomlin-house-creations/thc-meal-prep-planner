@@ -13,7 +13,14 @@ Author: THC Meal Prep Planner Team
 Created: 2026-01-18
 """
 
-from typing import Any
+from typing import Any, Optional
+
+# Try to import LLM utilities for cuisine classification
+try:
+    from llm_utils import get_openai_client
+    LLM_AVAILABLE = True
+except ImportError:
+    LLM_AVAILABLE = False
 
 
 # ==============================================================================
@@ -37,6 +44,61 @@ PENALTY_VALUES = {
 
 
 # ==============================================================================
+# HELPER FUNCTIONS
+# ==============================================================================
+
+
+def classify_cuisine_with_llm(recipe_title: str, ingredients: str = "") -> Optional[str]:
+    """Use LLM to classify the cuisine type of a recipe.
+    
+    Args:
+        recipe_title: Title of the recipe
+        ingredients: Optional ingredients list as string
+        
+    Returns:
+        Classified cuisine type or None if classification fails
+        
+    Example:
+        cuisine = classify_cuisine_with_llm("Pad Thai", "rice noodles, peanuts...")
+        # Returns: "Thai" or "Asian"
+    """
+    if not LLM_AVAILABLE:
+        return None
+    
+    client = get_openai_client()
+    if not client:
+        return None
+    
+    try:
+        prompt = f"""Classify the cuisine type of this recipe. Return only the cuisine name (e.g., Italian, Mexican, Asian, American, Mediterranean, etc.).
+
+Recipe: {recipe_title}"""
+        
+        if ingredients:
+            prompt += f"\nKey ingredients: {ingredients}"
+        
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a culinary expert. Classify cuisines accurately and concisely."},
+                {"role": "user", "content": prompt}
+            ],
+            max_tokens=20,
+            temperature=0.3,
+        )
+        
+        if response.choices and len(response.choices) > 0:
+            cuisine = response.choices[0].message.content
+            if cuisine:
+                return cuisine.strip()
+        
+        return None
+    except Exception:
+        # Silently fail and return None
+        return None
+
+
+# ==============================================================================
 # VARIETY SCORING FUNCTIONS
 # ==============================================================================
 
@@ -46,6 +108,7 @@ def calculate_cuisine_variety_score(meal_plan: dict[str, Any]) -> dict[str, Any]
     
     Awards points for using different cuisines throughout the week.
     Penalties for consecutive days with the same cuisine.
+    Attempts to classify unknown cuisines using LLM if available.
     
     Args:
         meal_plan: The meal plan dictionary
@@ -65,17 +128,33 @@ def calculate_cuisine_variety_score(meal_plan: dict[str, Any]) -> dict[str, Any]
     for day_name, meals in meal_plan.get("week", {}).items():
         day_cuisines = set()
         for meal_type, recipe in meals.items():
-            cuisine = recipe.get("Cuisine", "Unknown")
-            cuisines.append(cuisine)
-            day_cuisines.add(cuisine)
+            cuisine = recipe.get("Cuisine")
+            
+            # Try to classify unknown cuisines with LLM
+            if not cuisine or str(cuisine).strip().lower() in ("unknown", ""):
+                recipe_title = recipe.get("title", "")
+                # Only attempt classification for actual recipes, not placeholders
+                if recipe_title and not recipe_title.startswith("No "):
+                    classified = classify_cuisine_with_llm(recipe_title)
+                    if classified:
+                        cuisine = classified
+                    else:
+                        cuisine = "Unknown"
+                else:
+                    cuisine = "Unknown"
+            
+            # Only add known cuisines to the variety calculation
+            if cuisine and str(cuisine).strip().lower() != "unknown":
+                cuisines.append(cuisine)
+                day_cuisines.add(cuisine)
         
-        # Check for consecutive same cuisines across days
-        if prev_day_cuisines and prev_day_cuisines == day_cuisines:
+        # Check for consecutive days sharing any cuisine
+        if prev_day_cuisines and (prev_day_cuisines & day_cuisines):
             consecutive_penalties += 1
         
         prev_day_cuisines = day_cuisines
     
-    # Calculate score
+    # Calculate score - only count known cuisines
     unique_cuisines = len(set(cuisines))
     variety_points = unique_cuisines * SCORING_WEIGHTS["cuisine_variety"]
     penalty_points = consecutive_penalties * PENALTY_VALUES["consecutive_same_cuisine"]
@@ -190,7 +269,7 @@ def calculate_constraint_penalties(
 ) -> dict[str, Any]:
     """Calculate penalties for constraint violations.
     
-    Checks for missing required meals and other constraint violations.
+    Checks for missing required meals and variety constraint violations.
     
     Args:
         meal_plan: The meal plan dictionary
@@ -204,6 +283,7 @@ def calculate_constraint_penalties(
     """
     violations = []
     missing_meals = 0
+    variety_violations = 0
     
     # Get required meals per day
     meals_per_day = constraints.get("meals_per_day", {})
@@ -214,7 +294,8 @@ def calculate_constraint_penalties(
             if required_count > 0:
                 meal = meals.get(meal_type, {})
                 # Check if meal is missing or is a placeholder
-                if not meal or "No" in meal.get("title", "No"):
+                title = meal.get("title", "")
+                if not meal or (isinstance(title, str) and title.startswith("No ")):
                     missing_meals += 1
                     violations.append({
                         "type": "missing_meal",
@@ -222,12 +303,60 @@ def calculate_constraint_penalties(
                         "meal_type": meal_type,
                     })
     
+    # Check variety constraints
+    variety_config = constraints.get("variety", {})
+    
+    # Check min_unique_cuisines constraint
+    min_unique_cuisines = variety_config.get("min_unique_cuisines")
+    if min_unique_cuisines:
+        cuisines = set()
+        for day_name, meals in meal_plan.get("week", {}).items():
+            for meal_type, recipe in meals.items():
+                cuisine = recipe.get("Cuisine")
+                if cuisine and str(cuisine).strip().lower() != "unknown":
+                    cuisines.add(cuisine)
+        
+        if len(cuisines) < min_unique_cuisines:
+            variety_violations += 1
+            violations.append({
+                "type": "insufficient_cuisine_variety",
+                "expected": min_unique_cuisines,
+                "actual": len(cuisines),
+            })
+    
+    # Check avoid_consecutive_ingredients constraint
+    if variety_config.get("avoid_consecutive_ingredients", False):
+        prev_ingredients = set()
+        for day_name, meals in meal_plan.get("week", {}).items():
+            day_ingredients = set()
+            for meal_type, recipe in meals.items():
+                # Extract main ingredients (this is a simplified version)
+                # In a full implementation, you'd parse the ingredients list
+                protein = recipe.get("Protein")
+                if protein:
+                    day_ingredients.add(protein.lower())
+            
+            # Check for consecutive day overlap
+            if prev_ingredients and (prev_ingredients & day_ingredients):
+                variety_violations += 1
+                violations.append({
+                    "type": "consecutive_ingredients",
+                    "day": day_name,
+                    "ingredients": list(prev_ingredients & day_ingredients),
+                })
+            
+            prev_ingredients = day_ingredients
+    
     # Calculate penalty
-    penalty_points = missing_meals * PENALTY_VALUES["missing_meal"]
+    penalty_points = (
+        missing_meals * PENALTY_VALUES["missing_meal"]
+        + variety_violations * PENALTY_VALUES["constraint_violation"]
+    )
     
     return {
         "total": penalty_points,
         "missing_meals": missing_meals,
+        "variety_violations": variety_violations,
         "violations": violations,
     }
 
