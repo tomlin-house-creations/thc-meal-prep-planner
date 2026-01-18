@@ -1,0 +1,137 @@
+# Enhanced Constraints for Meal Plan Generation
+# 
+# This file demonstrates advanced constraint types including:
+# - No-cook nights
+# - Meal blocking (protein types, ingredients)
+# - Extended variety rules
+# - History-based repeat prevention
+
+# Week Configuration
+week:
+  start_date: "2026-01-20"  # Week start (YYYY-MM-DD)
+  end_date: "2026-01-26"    # Week end (YYYY-MM-DD)
+
+# Meal Requirements
+meals_per_day:
+  breakfast: 1
+  lunch: 1
+  dinner: 1
+  snack: 0
+
+# Budget Constraints
+budget:
+  max_per_week: 150.00
+  currency: "USD"
+  track_spending: true
+
+# Time Constraints
+time:
+  # Maximum prep time on weeknights (Monday-Friday)
+  max_weeknight_prep_minutes: 45
+  
+  # Maximum prep time on weekends (Saturday-Sunday)
+  max_weekend_prep_minutes: 180
+  
+  # No-cook nights - specific days where no cooking is allowed
+  # Useful for leftovers, eating out, or very busy days
+  no_cook_nights:
+    enabled: true
+    days:
+      - "Wednesday"  # Mid-week break from cooking
+    # On no-cook nights, only recipes with prep_time <= this value are allowed
+    max_prep_minutes: 10
+
+# Variety Requirements
+variety:
+  # Minimum days before the same recipe can be repeated
+  # Applies to current week AND history
+  min_days_between_repeats: 7
+  
+  # Try to use different cuisines throughout the week
+  prefer_cuisine_variety: true
+  
+  # Minimum number of unique cuisines per week
+  min_unique_cuisines: 3
+  
+  # Avoid using the same main ingredient on consecutive days
+  avoid_consecutive_ingredients: true
+
+# Meal Blocking Constraints
+# These prevent certain patterns to ensure variety
+blocking:
+  # Protein type blocking
+  # Prevents using the same protein type too frequently
+  protein_blocking:
+    enabled: true
+    # Don't use the same protein on consecutive days
+    max_consecutive_days: 1
+    # Protein types to track
+    # Add these as tags in your recipes (e.g., - **Protein**: Chicken)
+    protein_types:
+      - "Chicken"
+      - "Beef"
+      - "Pork"
+      - "Fish"
+      - "Tofu"
+      - "Eggs"
+      - "Beans"
+  
+  # Cuisine blocking
+  # Prevents cuisine monotony
+  cuisine_blocking:
+    enabled: true
+    # Don't use the same cuisine on consecutive days
+    max_consecutive_days: 2
+  
+  # Cooking method blocking
+  # Ensures variety in how food is prepared
+  cooking_method_blocking:
+    enabled: false  # Disabled by default
+    max_consecutive_days: 2
+    methods:
+      - "Grilled"
+      - "Baked"
+      - "Fried"
+      - "Steamed"
+      - "Raw"
+
+# History Integration
+history:
+  # Whether to use historical meal plans for variety enforcement
+  enabled: true
+  
+  # How many days of history to consider
+  # History older than this is ignored
+  ttl_days: 30
+  
+  # Path to history directory (relative to project root)
+  directory: "history"
+  
+  # Automatically save generated plans to history
+  auto_save: true
+
+# Nutritional Balance
+nutrition:
+  # Try to balance nutrition across the week
+  balance_macros: true
+  
+  # Target average calories per day
+  target_calories_per_day: 2000
+  
+  # Target macro ratios (percentages)
+  target_macros:
+    protein: 30    # 30% of calories from protein
+    carbs: 40      # 40% of calories from carbs
+    fat: 30        # 30% of calories from fat
+
+# Scoring and Penalties
+scoring:
+  # Whether to calculate and display variety scores
+  enabled: true
+  
+  # Minimum acceptable score
+  # Plans below this score will trigger a warning
+  min_acceptable_score: 50
+  
+  # Display detailed scoring breakdown in generated plans
+  show_detailed_breakdown: true

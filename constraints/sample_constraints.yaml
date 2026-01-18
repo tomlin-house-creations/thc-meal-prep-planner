@@ -48,3 +48,25 @@ nutrition:
   
   # Target average calories per day
   target_calories_per_day: 2000
+
+# History Integration (for tracking and variety across weeks)
+history:
+  # Whether to use historical meal plans for variety enforcement
+  enabled: true
+  
+  # How many days of history to consider
+  ttl_days: 30
+  
+  # Path to history directory (relative to project root)
+  directory: "history"
+  
+  # Automatically save generated plans to history
+  auto_save: true
+
+# Scoring and Penalties (display meal plan quality metrics)
+scoring:
+  # Whether to calculate and display variety scores
+  enabled: true
+  
+  # Display detailed scoring breakdown in generated plans
+  show_detailed_breakdown: true
