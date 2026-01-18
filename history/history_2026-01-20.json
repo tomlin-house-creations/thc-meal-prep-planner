@@ -1,30 +1,30 @@
 {
   "version": "1.0",
-  "created_at": "2026-01-18T20:29:16.574911",
+  "created_at": "2026-01-18T20:30:32.936848",
   "ttl_days": 30,
-  "expires_at": "2026-02-17T20:29:16.574918",
+  "expires_at": "2026-02-17T20:30:32.936856",
   "week_start": "2026-01-20",
   "week_end": "2026-01-26",
   "profile_name": "Ashuah Patel",
   "meals": {
     "Tuesday": {
       "breakfast": {
-        "title": "Breakfast Burritos",
-        "filename": "breakfast-burritos.md",
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
         "category": "Breakfast",
-        "cuisine": null
+        "cuisine": "American"
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
       }
     },
     "Wednesday": {
@@ -35,36 +35,36 @@
         "cuisine": null
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Mediterranean Quinoa Bowl",
+        "filename": "mediterranean-quinoa-bowl.md",
+        "category": "Lunch",
+        "cuisine": "Mediterranean"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
       }
     },
     "Thursday": {
       "breakfast": {
-        "title": "No breakfast recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
+        "category": "Breakfast",
+        "cuisine": "American"
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
       }
     },
     "Friday": {
@@ -75,36 +75,36 @@
         "cuisine": null
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Mediterranean Quinoa Bowl",
+        "filename": "mediterranean-quinoa-bowl.md",
+        "category": "Lunch",
+        "cuisine": "Mediterranean"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
       }
     },
     "Saturday": {
       "breakfast": {
-        "title": "No breakfast recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
+        "category": "Breakfast",
+        "cuisine": "American"
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
       }
     },
     "Sunday": {
@@ -115,36 +115,36 @@
         "cuisine": null
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Mediterranean Quinoa Bowl",
+        "filename": "mediterranean-quinoa-bowl.md",
+        "category": "Lunch",
+        "cuisine": "Mediterranean"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
       }
     },
     "Monday": {
       "breakfast": {
-        "title": "No breakfast recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
+        "category": "Breakfast",
+        "cuisine": "American"
       },
       "lunch": {
-        "title": "No lunch recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
       },
       "dinner": {
-        "title": "No dinner recipe available",
-        "filename": null,
-        "category": null,
-        "cuisine": null
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
       }
     }
   }
