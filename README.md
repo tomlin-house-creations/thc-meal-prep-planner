@@ -109,11 +109,16 @@ The CI workflow is already configured to use this secret automatically.
 
 **Note**: The script works perfectly without an API key - LLM features are optional!
 
+For detailed information, see the **[LLM Integration Guide](docs/LLM_INTEGRATION.md)**.
+
 ## Documentation
 
 ### Getting Started
 - **[Onboarding Guide](docs/ONBOARDING.md)**: Getting started as a contributor
 - **[Contributing Guide](CONTRIBUTING.md)**: How to contribute to this project
+
+### Features & Usage
+- **[LLM Integration Guide](docs/LLM_INTEGRATION.md)**: Complete guide to AI-powered meal suggestions
 
 ### Standards & Guidelines  
 - **[Code Style Guide](CODE_STYLE.md)**: Coding standards for Python and TypeScript
