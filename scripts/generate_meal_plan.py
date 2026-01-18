@@ -389,21 +389,15 @@ def select_meal_with_llm(
                 print(f"   🤖 LLM suggested '{llm_suggestion}', "
                       f"matched with recipe: {recipe.get('title')}")
                 return recipe
-        
-        # Fallback: If word-based matching failed (e.g., both lists are empty
-        # or no matches found), try exact substring matching
-        # This handles cases like "Tea" matching "Green Tea"
-        if not llm_words or not any(
-            extract_significant_words(r.get("title", ""))
-            for r in suitable_recipes
-        ):
-            for recipe in suitable_recipes:
-                recipe_lower = recipe.get("title", "").lower()
-                # Check if either string is a substring of the other
-                if llm_lower in recipe_lower or recipe_lower in llm_lower:
-                    print(f"   🤖 LLM suggested '{llm_suggestion}', "
-                          f"matched with recipe (substring): {recipe.get('title')}")
-                    return recipe
+            
+            # Per-recipe fallback: If word-based matching failed for this recipe,
+            # try exact substring matching between the LLM suggestion and this title.
+            # This handles cases like "Tea" matching "Green Tea" or "Pie" -> "Pi",
+            # even when other recipes have significant words.
+            if llm_lower in recipe_lower or recipe_lower in llm_lower:
+                print(f"   🤖 LLM suggested '{llm_suggestion}', "
+                      f"matched with recipe (substring): {recipe.get('title')}")
+                return recipe
     
     # If no LLM suggestion or no matching recipe, use random selection
     # This is the original deterministic behavior
