@@ -68,10 +68,59 @@ MAX_TOKENS = 150
 # 0.7 provides a good balance between creativity and consistency
 TEMPERATURE = 0.7
 
+# Maximum length for user-provided strings to prevent prompt injection
+# This limits the size of meal names, dietary restrictions, etc. in prompts
+MAX_INPUT_LENGTH = 500
+
 
 # ==============================================================================
 # HELPER FUNCTIONS
 # ==============================================================================
+
+
+def sanitize_input(text: str, max_length: int = MAX_INPUT_LENGTH) -> str:
+    """Sanitize user-provided text before including in LLM prompts.
+    
+    This prevents prompt injection attacks and ensures safe input by:
+    - Removing potentially harmful characters
+    - Limiting input length
+    - Normalizing whitespace
+    
+    Args:
+        text: The text to sanitize
+        max_length: Maximum allowed length (default: MAX_INPUT_LENGTH)
+        
+    Returns:
+        Sanitized text safe for use in prompts
+        
+    Example:
+        safe_text = sanitize_input("User's dietary preference")
+        # Returns clean text without potentially harmful content
+    """
+    if not text:
+        return ""
+    
+    # Convert to string and strip
+    text = str(text).strip()
+    
+    # Limit length to prevent abuse
+    if len(text) > max_length:
+        text = text[:max_length]
+    
+    # Remove or escape potentially problematic characters
+    # Keep alphanumeric, spaces, common punctuation, but remove control chars
+    allowed_chars = set(
+        "abcdefghijklmnopqrstuvwxyz"
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "0123456789"
+        " .,;:!?-'\"()/&"
+    )
+    sanitized = "".join(c for c in text if c in allowed_chars)
+    
+    # Normalize whitespace
+    sanitized = " ".join(sanitized.split())
+    
+    return sanitized
 
 
 def is_llm_available() -> bool:
@@ -173,12 +222,19 @@ def build_meal_suggestion_prompt(
         max_time = time_constraints.get("max_weekend_prep_minutes", 180)
         time_context = "weekend"
     
-    # Extract dietary info from profile
-    dietary_restrictions = profile.get("Dietary Restrictions", "None")
-    food_preferences = profile.get("Food Preferences", "")
+    # Extract and sanitize dietary info from profile
+    dietary_restrictions = sanitize_input(
+        profile.get("Dietary Restrictions", "None")
+    )
+    food_preferences = sanitize_input(
+        profile.get("Food Preferences", "")
+    )
+    
+    # Sanitize meal type
+    meal_type_safe = sanitize_input(meal_type)
     
     # Build the prompt
-    prompt = f"""You are a creative meal planning assistant. Suggest a {meal_type} meal idea.
+    prompt = f"""You are a creative meal planning assistant. Suggest a {meal_type_safe} meal idea.
 
 Context:
 - Meal type: {meal_type}
@@ -190,8 +246,13 @@ Context:
 """
     
     # Add recently used meals to avoid repetition
+    # Sanitize each meal name to prevent prompt injection
     if recently_used_meals:
-        prompt += f"Recently used meals (please avoid): {', '.join(recently_used_meals)}\n\n"
+        sanitized_meals = [sanitize_input(meal) for meal in recently_used_meals]
+        # Filter out empty strings after sanitization
+        sanitized_meals = [m for m in sanitized_meals if m]
+        if sanitized_meals:
+            prompt += f"Recently used meals (please avoid): {', '.join(sanitized_meals)}\n\n"
     
     prompt += """Please suggest ONE specific meal name only. Keep it simple and practical.
 Format: Just the meal name, nothing else.
@@ -294,9 +355,15 @@ def get_meal_suggestion(
         if response.choices and len(response.choices) > 0:
             suggestion = response.choices[0].message.content
             if suggestion:
-                # Clean up the suggestion (remove quotes, extra whitespace)
-                suggestion = suggestion.strip().strip('"').strip("'")
-                return suggestion
+                # Clean up the suggestion more robustly
+                # Remove various quote types and extra whitespace
+                suggestion = suggestion.strip()
+                # Remove common quote patterns
+                for quote_char in ['"', "'", '"', '"', "'", "'"]:
+                    suggestion = suggestion.strip(quote_char)
+                # Final whitespace normalization
+                suggestion = " ".join(suggestion.split())
+                return suggestion if suggestion else None
         
         return None
         

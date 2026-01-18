@@ -65,6 +65,16 @@ except ImportError:
 
 
 # ==============================================================================
+# CONFIGURATION - Settings for meal plan generation
+# ==============================================================================
+
+# Minimum word length to consider when matching LLM suggestions to recipes
+# Words shorter than this are typically articles/prepositions (e.g., "a", "the", "of")
+# and don't help identify the specific recipe
+MIN_WORD_LENGTH_FOR_MATCHING = 3
+
+
+# ==============================================================================
 # HELPER FUNCTIONS - Small functions that do one specific job
 # ==============================================================================
 
@@ -339,7 +349,13 @@ def select_meal_with_llm(
         for recipe in suitable_recipes:
             recipe_title = recipe.get("title", "").lower()
             # Check if there's significant overlap in words
-            if any(word in recipe_title for word in llm_lower.split() if len(word) > 3):
+            # Only consider words longer than MIN_WORD_LENGTH_FOR_MATCHING
+            # to filter out articles and prepositions
+            if any(
+                word in recipe_title
+                for word in llm_lower.split()
+                if len(word) > MIN_WORD_LENGTH_FOR_MATCHING
+            ):
                 # Found a match! Use this recipe
                 print(f"   🤖 LLM suggested '{llm_suggestion}', "
                       f"matched with recipe: {recipe.get('title')}")
