@@ -13,10 +13,11 @@ Key Features:
 - Generate clean, Alexa-friendly Markdown with checkboxes
 
 Typical usage:
-    from grocery_list_generator import generate_grocery_list
+    from grocery_list_generator import generate_grocery_list_from_recipes
+    from pathlib import Path
 
-    recipes = ["breakfast-burritos.md", "fish-tacos.md"]
-    grocery_list = generate_grocery_list(recipes, "recipes/")
+    recipes = ["breakfast-burritos", "fish-tacos"]
+    grocery_list = generate_grocery_list_from_recipes(recipes, Path("recipes/"))
     print(grocery_list)
 
 Author: THC Meal Prep Planner Team
@@ -272,7 +273,8 @@ def parse_ingredient_line(line: str) -> Optional[Tuple[str, str, str]]:
         "tb",
         "tsp",
         "ts",
-        "t",
+        # Note: 't' is intentionally omitted as it's too ambiguous and could match
+        # unrelated words in ingredient names. Users should use 'tsp' or 'ts' instead.
         "cup",
         "cups",
         "c",
@@ -367,7 +369,8 @@ def normalize_unit(unit: str) -> str:
         return "tablespoon"
 
     # Teaspoon variations
-    if unit_lower in ["tsp", "ts", "t", "teaspoon", "teaspoons"]:
+    # Note: 't' is intentionally omitted as it's too ambiguous
+    if unit_lower in ["tsp", "ts", "teaspoon", "teaspoons"]:
         return "teaspoon"
 
     # Cup variations
@@ -688,8 +691,8 @@ def pluralize_unit(unit: str, quantity: float) -> str:
     if quantity <= 1:
         return unit
 
-    # Don't add 's' if already plural (ends with 's', 'es', etc.)
-    if unit.endswith("s") or unit.endswith("es"):
+    # Don't add 's' if already plural (ends with 's')
+    if unit.endswith("s"):
         return unit
 
     # Most units just add 's'
