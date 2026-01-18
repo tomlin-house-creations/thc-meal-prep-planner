@@ -1,0 +1,151 @@
+{
+  "version": "1.0",
+  "created_at": "2026-01-18T20:29:16.574911",
+  "ttl_days": 30,
+  "expires_at": "2026-02-17T20:29:16.574918",
+  "week_start": "2026-01-20",
+  "week_end": "2026-01-26",
+  "profile_name": "Ashuah Patel",
+  "meals": {
+    "Tuesday": {
+      "breakfast": {
+        "title": "Breakfast Burritos",
+        "filename": "breakfast-burritos.md",
+        "category": "Breakfast",
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    },
+    "Wednesday": {
+      "breakfast": {
+        "title": "No breakfast recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    },
+    "Thursday": {
+      "breakfast": {
+        "title": "No breakfast recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    },
+    "Friday": {
+      "breakfast": {
+        "title": "No breakfast recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    },
+    "Saturday": {
+      "breakfast": {
+        "title": "No breakfast recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    },
+    "Sunday": {
+      "breakfast": {
+        "title": "No breakfast recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    },
+    "Monday": {
+      "breakfast": {
+        "title": "No breakfast recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "lunch": {
+        "title": "No lunch recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      },
+      "dinner": {
+        "title": "No dinner recipe available",
+        "filename": null,
+        "category": null,
+        "cuisine": null
+      }
+    }
+  }
+}

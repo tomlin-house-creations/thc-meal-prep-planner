@@ -63,6 +63,26 @@ except ImportError:
     LLM_UTILS_AVAILABLE = False
     # If import fails, we'll just use deterministic selection
 
+# Import history tracking utilities
+try:
+    from history_utils import (
+        save_plan_to_history,
+        get_recently_used_recipes,
+        days_since_recipe_used,
+    )
+    HISTORY_UTILS_AVAILABLE = True
+except ImportError:
+    HISTORY_UTILS_AVAILABLE = False
+    print("⚠️  Warning: history_utils not available - history tracking disabled")
+
+# Import variety scoring utilities
+try:
+    from variety_scoring import calculate_meal_plan_score, format_score_summary
+    SCORING_UTILS_AVAILABLE = True
+except ImportError:
+    SCORING_UTILS_AVAILABLE = False
+    print("⚠️  Warning: variety_scoring not available - scoring disabled")
+
 
 # ==============================================================================
 # CONFIGURATION - Settings for meal plan generation
@@ -415,6 +435,7 @@ def generate_meal_plan(
     profile: dict[str, Any],
     recipes: list[dict[str, Any]],
     constraints: dict[str, Any],
+    history_dir: Optional[Path] = None,
 ) -> dict[str, Any]:
     """Generate a weekly meal plan.
 
@@ -425,12 +446,13 @@ def generate_meal_plan(
     1. For each day of the week
     2. For each meal type (breakfast, lunch, dinner)
     3. Pick a suitable recipe
-    4. Try not to repeat recipes too soon
+    4. Try not to repeat recipes too soon (checking history)
 
     Args:
         profile: The person's profile
         recipes: List of available recipes
         constraints: Planning rules
+        history_dir: Optional directory containing meal plan history
 
     Returns:
         A dictionary with the complete meal plan
@@ -445,7 +467,7 @@ def generate_meal_plan(
     # provide clear error messages if the constraints file is misconfigured.
     week_constraints = constraints.get("week")
     if not isinstance(week_constraints, dict):
-        raise ValueError("Constraints file is missing required 'week' section.")
+        raise ValueError("Constraints file is missing required 'time' section.")
     
     try:
         start_date_str = week_constraints["start_date"]
@@ -476,6 +498,22 @@ def generate_meal_plan(
 
     # Keep track of recently used recipes to avoid repetition
     recently_used = []
+    
+    # Load history if available and enabled
+    history_recently_used = []
+    if HISTORY_UTILS_AVAILABLE and history_dir:
+        history_config = constraints.get("history", {})
+        if history_config.get("enabled", False):
+            print("📚 Loading meal plan history...")
+            recent_from_history = get_recently_used_recipes(
+                history_dir,
+                days_back=history_config.get("ttl_days", 30),
+            )
+            history_recently_used = [r["filename"] for r in recent_from_history if r.get("filename")]
+            if history_recently_used:
+                print(f"   Found {len(history_recently_used)} recipes used in recent history")
+            # Combine with current week's tracking
+            recently_used.extend(history_recently_used)
 
     # Loop through each day in the configured week, using actual calendar dates
     current_date = start_date
@@ -510,16 +548,23 @@ def generate_meal_plan(
                 if chosen_recipe:
                     daily_meals[meal_type] = chosen_recipe
 
-                    # Remember we used this recipe
-                    recently_used.append(chosen_recipe.get("filename"))
+                    # Remember we used this recipe (only from current week, not history)
+                    if chosen_recipe.get("filename") not in history_recently_used:
+                        recently_used.append(chosen_recipe.get("filename"))
 
                     # Keep the recently_used list from getting too long
                     # Use the variety constraint to determine how long to track
                     max_recently_used = constraints.get("variety", {}).get(
                         "min_days_between_repeats", 3
                     )
-                    if len(recently_used) > max_recently_used:
-                        recently_used.pop(0)
+                    # Add buffer for history items
+                    max_tracking = max_recently_used + len(history_recently_used)
+                    if len(recently_used) > max_tracking:
+                        # Only remove items not from history
+                        for item in recently_used[:]:
+                            if item not in history_recently_used:
+                                recently_used.remove(item)
+                                break
                 else:
                     # No suitable recipes found - note this in the plan
                     daily_meals[meal_type] = {
@@ -537,7 +582,11 @@ def generate_meal_plan(
     return meal_plan
 
 
-def format_meal_plan_as_markdown(meal_plan: dict[str, Any]) -> str:
+def format_meal_plan_as_markdown(
+    meal_plan: dict[str, Any],
+    constraints: dict[str, Any] = None,
+    score: dict[str, Any] = None,
+) -> str:
     """Convert a meal plan to a nice Markdown format for saving.
 
     This takes our meal plan data and turns it into a readable Markdown
@@ -545,12 +594,14 @@ def format_meal_plan_as_markdown(meal_plan: dict[str, Any]) -> str:
 
     Args:
         meal_plan: The complete meal plan dictionary
+        constraints: Optional constraints dict for scoring context
+        score: Optional pre-calculated score dictionary
 
     Returns:
         A string containing the formatted Markdown
 
     Example:
-        markdown = format_meal_plan_as_markdown(plan)
+        markdown = format_meal_plan_as_markdown(plan, constraints, score)
         print(markdown)  # Shows the nicely formatted plan
     """
     lines = []
@@ -562,6 +613,20 @@ def format_meal_plan_as_markdown(meal_plan: dict[str, Any]) -> str:
         f"**Week of {meal_plan['week_start']} to {meal_plan['week_end']}**"
     )
     lines.append("")
+    
+    # Add variety score if available and enabled
+    if score and constraints:
+        scoring_config = constraints.get("scoring", {})
+        if scoring_config.get("enabled", False):
+            lines.append("---")
+            lines.append("")
+            if scoring_config.get("show_detailed_breakdown", False) and SCORING_UTILS_AVAILABLE:
+                lines.append(format_score_summary(score))
+            else:
+                # Just show the summary
+                lines.append(f"**Meal Plan Quality Score**: {score['total_score']} ({score['grade']})")
+                lines.append("")
+    
     lines.append("---")
     lines.append("")
 
@@ -606,7 +671,12 @@ def format_meal_plan_as_markdown(meal_plan: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def save_meal_plan(meal_plan: dict[str, Any], output_dir: Path) -> Path:
+def save_meal_plan(
+    meal_plan: dict[str, Any],
+    output_dir: Path,
+    constraints: dict[str, Any] = None,
+    score: dict[str, Any] = None,
+) -> Path:
     """Save the meal plan to a Markdown file.
 
     This writes the meal plan to a file so you can read it later or share it.
@@ -614,12 +684,14 @@ def save_meal_plan(meal_plan: dict[str, Any], output_dir: Path) -> Path:
     Args:
         meal_plan: The complete meal plan
         output_dir: Where to save the file
+        constraints: Optional constraints for scoring context
+        score: Optional pre-calculated score
 
     Returns:
         The path where the file was saved
 
     Example:
-        file_path = save_meal_plan(plan, Path("plans/"))
+        file_path = save_meal_plan(plan, Path("plans/"), constraints, score)
         print(f"Saved to {file_path}")
     """
     # Create a filename with the date
@@ -627,7 +699,7 @@ def save_meal_plan(meal_plan: dict[str, Any], output_dir: Path) -> Path:
     output_path = output_dir / filename
 
     # Convert to Markdown and save
-    markdown_content = format_meal_plan_as_markdown(meal_plan)
+    markdown_content = format_meal_plan_as_markdown(meal_plan, constraints, score)
 
     with open(output_path, "w", encoding="utf-8") as f:
         f.write(markdown_content)
@@ -670,6 +742,7 @@ def main() -> None:
     recipes_dir = project_root / "recipes"
     constraints_dir = project_root / "constraints"
     plans_dir = project_root / "plans"
+    history_dir = project_root / "history"
 
     # Make sure the plans directory exists
     plans_dir.mkdir(exist_ok=True)
@@ -691,11 +764,42 @@ def main() -> None:
         constraints_path = constraints_dir / "sample_constraints.yaml"
         constraints = load_constraints(constraints_path)
 
-        # Step 4: Generate the meal plan
-        meal_plan = generate_meal_plan(profile, recipes, constraints)
+        # Step 4: Generate the meal plan (with history integration)
+        meal_plan = generate_meal_plan(profile, recipes, constraints, history_dir)
 
-        # Step 5: Save the meal plan
-        output_path = save_meal_plan(meal_plan, plans_dir)
+        # Step 5: Calculate variety score if enabled
+        score = None
+        if SCORING_UTILS_AVAILABLE:
+            scoring_config = constraints.get("scoring", {})
+            if scoring_config.get("enabled", False):
+                print("\n📊 Calculating variety score...")
+                # Get list of recently used recipe filenames for scoring
+                history_recently_used = []
+                if HISTORY_UTILS_AVAILABLE:
+                    history_config = constraints.get("history", {})
+                    if history_config.get("enabled", False):
+                        recent_from_history = get_recently_used_recipes(
+                            history_dir,
+                            days_back=history_config.get("ttl_days", 30),
+                        )
+                        history_recently_used = [
+                            r["filename"] for r in recent_from_history if r.get("filename")
+                        ]
+                
+                score = calculate_meal_plan_score(meal_plan, constraints, history_recently_used)
+                print(f"   Score: {score['total_score']} ({score['grade']})")
+
+        # Step 6: Save the meal plan
+        output_path = save_meal_plan(meal_plan, plans_dir, constraints, score)
+        
+        # Step 7: Save to history if enabled
+        if HISTORY_UTILS_AVAILABLE:
+            history_config = constraints.get("history", {})
+            if history_config.get("enabled", False) and history_config.get("auto_save", False):
+                print("\n💾 Saving to history...")
+                ttl_days = history_config.get("ttl_days", 30)
+                history_path = save_plan_to_history(meal_plan, history_dir, ttl_days)
+                print(f"   Saved history to {history_path}")
 
         # Success! Tell the user what happened
         print()
