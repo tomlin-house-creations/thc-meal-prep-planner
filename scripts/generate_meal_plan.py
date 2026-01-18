@@ -303,24 +303,30 @@ def is_recipe_suitable(
 
 def check_blocking_constraints(
     recipe: dict[str, Any],
-    recently_used_recipes: list[dict[str, Any]],
+    recently_used_recipes_by_day: list[list[dict[str, Any]]],
     constraints: dict[str, Any],
 ) -> bool:
     """Check if a recipe violates blocking constraints.
     
     Checks protein blocking, cuisine blocking, and cooking method blocking
-    to prevent repetitive patterns.
+    to prevent repetitive patterns. Blocking constraints operate on DAYS,
+    not individual meals.
     
     Args:
         recipe: The recipe to check
-        recently_used_recipes: List of recently used recipe dictionaries
+        recently_used_recipes_by_day: List of days, where each day is a list of recipe dicts
+                                      from that day. Most recent days are at the end.
         constraints: The constraints dictionary
         
     Returns:
         True if recipe passes blocking checks, False if blocked
         
     Example:
-        if check_blocking_constraints(recipe, recent, constraints):
+        # recently_used_recipes_by_day = [
+        #   [monday_breakfast, monday_lunch, monday_dinner],
+        #   [tuesday_breakfast, tuesday_lunch],  # partial day so far
+        # ]
+        if check_blocking_constraints(recipe, recent_by_day, constraints):
             print("Recipe passes blocking checks")
     """
     blocking_config = constraints.get("blocking", {})
@@ -328,57 +334,72 @@ def check_blocking_constraints(
     # Check protein blocking
     protein_blocking = blocking_config.get("protein_blocking", {})
     if protein_blocking.get("enabled", False):
-        max_consecutive = protein_blocking.get("max_consecutive_days", 1)
+        max_consecutive_days = protein_blocking.get("max_consecutive_days", 1)
         protein_types = protein_blocking.get("protein_types", [])
         recipe_protein = recipe.get("Protein", "")
         
         if recipe_protein in protein_types:
             # Count consecutive days with same protein
-            consecutive_count = 0
-            for past_recipe in reversed(recently_used_recipes[-max_consecutive:]):
-                if past_recipe.get("Protein") == recipe_protein:
-                    consecutive_count += 1
+            consecutive_days = 0
+            # Check days in reverse order (most recent first)
+            for day_recipes in reversed(recently_used_recipes_by_day[-max_consecutive_days:]):
+                # Check if any meal on this day has the same protein
+                day_has_protein = any(
+                    r.get("Protein") == recipe_protein for r in day_recipes
+                )
+                if day_has_protein:
+                    consecutive_days += 1
                 else:
                     break
             
-            if consecutive_count >= max_consecutive:
+            if consecutive_days >= max_consecutive_days:
                 return False  # Too many consecutive days with this protein
     
     # Check cuisine blocking
     cuisine_blocking = blocking_config.get("cuisine_blocking", {})
     if cuisine_blocking.get("enabled", False):
-        max_consecutive = cuisine_blocking.get("max_consecutive_days", 2)
+        max_consecutive_days = cuisine_blocking.get("max_consecutive_days", 2)
         recipe_cuisine = recipe.get("Cuisine", "")
         
         if recipe_cuisine:
             # Count consecutive days with same cuisine
-            consecutive_count = 0
-            for past_recipe in reversed(recently_used_recipes[-max_consecutive:]):
-                if past_recipe.get("Cuisine") == recipe_cuisine:
-                    consecutive_count += 1
+            consecutive_days = 0
+            # Check days in reverse order (most recent first)
+            for day_recipes in reversed(recently_used_recipes_by_day[-max_consecutive_days:]):
+                # Check if any meal on this day has the same cuisine
+                day_has_cuisine = any(
+                    r.get("Cuisine") == recipe_cuisine for r in day_recipes
+                )
+                if day_has_cuisine:
+                    consecutive_days += 1
                 else:
                     break
             
-            if consecutive_count >= max_consecutive:
+            if consecutive_days >= max_consecutive_days:
                 return False  # Too many consecutive days with this cuisine
     
     # Check cooking method blocking
     method_blocking = blocking_config.get("cooking_method_blocking", {})
     if method_blocking.get("enabled", False):
-        max_consecutive = method_blocking.get("max_consecutive_days", 2)
+        max_consecutive_days = method_blocking.get("max_consecutive_days", 2)
         methods = method_blocking.get("methods", [])
         recipe_method = recipe.get("Method", "")
         
         if recipe_method in methods:
             # Count consecutive days with same method
-            consecutive_count = 0
-            for past_recipe in reversed(recently_used_recipes[-max_consecutive:]):
-                if past_recipe.get("Method") == recipe_method:
-                    consecutive_count += 1
+            consecutive_days = 0
+            # Check days in reverse order (most recent first)
+            for day_recipes in reversed(recently_used_recipes_by_day[-max_consecutive_days:]):
+                # Check if any meal on this day has the same method
+                day_has_method = any(
+                    r.get("Method") == recipe_method for r in day_recipes
+                )
+                if day_has_method:
+                    consecutive_days += 1
                 else:
                     break
             
-            if consecutive_count >= max_consecutive:
+            if consecutive_days >= max_consecutive_days:
                 return False  # Too many consecutive days with this method
     
     return True  # Passes all blocking checks
@@ -417,7 +438,7 @@ def select_meal_with_llm(
     constraints: dict[str, Any],
     recently_used: list[str],
     day_name: str = "",
-    recently_used_recipes_dict: list[dict[str, Any]] = None,
+    recently_used_recipes_by_day: list[list[dict[str, Any]]] = None,
 ) -> Optional[dict[str, Any]]:
     """Select a meal using LLM suggestions when available, with constraint validation.
     
@@ -437,7 +458,7 @@ def select_meal_with_llm(
         constraints: Planning constraints
         recently_used: List of recently used recipe filenames
         day_name: Name of the day (for no-cook night checking)
-        recently_used_recipes_dict: List of recently used recipe dicts (for blocking)
+        recently_used_recipes_by_day: List of days, each day is a list of recipes used that day
         
     Returns:
         Selected recipe dictionary, or None if no suitable recipe found
@@ -450,11 +471,12 @@ def select_meal_with_llm(
             is_weeknight=True,
             constraints,
             ["breakfast-burritos.md"],
-            "Monday"
+            "Monday",
+            [[monday_breakfast, monday_lunch]]
         )
     """
-    if recently_used_recipes_dict is None:
-        recently_used_recipes_dict = []
+    if recently_used_recipes_by_day is None:
+        recently_used_recipes_by_day = []
     
     # First, filter recipes to only those that meet hard constraints
     suitable_recipes = [
@@ -463,7 +485,7 @@ def select_meal_with_llm(
         if r.get("Category", "").lower() == meal_type
         and is_recipe_suitable(r, profile, is_weeknight, constraints, day_name)
         and r.get("filename") not in recently_used
-        and check_blocking_constraints(r, recently_used_recipes_dict, constraints)
+        and check_blocking_constraints(r, recently_used_recipes_by_day, constraints)
     ]
     
     # If no suitable recipes, return None
@@ -606,7 +628,8 @@ def generate_meal_plan(
 
     # Keep track of recently used recipes to avoid repetition
     recently_used = []
-    recently_used_recipes_dict = []  # Track full recipe objects for blocking constraints
+    recently_used_recipes_by_day = []  # Track recipes grouped by day for blocking constraints
+    current_day_recipes = []  # Accumulate recipes for the current day
     
     # Load history if available and enabled
     history_recently_used = []
@@ -632,6 +655,9 @@ def generate_meal_plan(
         # Is this a weeknight? (Monday = 0, Sunday = 6)
         is_weeknight = current_date.weekday() < 5  # Monday-Friday
 
+        # Start a new day - reset the current day's recipe list
+        current_day_recipes = []
+        
         # Create a place to store today's meals
         daily_meals = {}
 
@@ -653,18 +679,20 @@ def generate_meal_plan(
                     constraints,
                     recently_used,
                     day_name,
-                    recently_used_recipes_dict,
+                    recently_used_recipes_by_day,
                 )
                 
                 if chosen_recipe:
                     daily_meals[meal_type] = chosen_recipe
+                    
+                    # Add to current day's recipes for blocking constraint tracking
+                    current_day_recipes.append(chosen_recipe)
 
                     # Remember we used this recipe (only from current week, not history)
                     if chosen_recipe.get("filename") not in history_recently_used:
                         recently_used.append(chosen_recipe.get("filename"))
-                        recently_used_recipes_dict.append(chosen_recipe)
 
-                    # Keep the recently_used lists from getting too long
+                    # Keep the recently_used list from getting too long
                     # Use the variety constraint to determine how long to track
                     max_recently_used = constraints.get("variety", {}).get(
                         "min_days_between_repeats", 3
@@ -678,11 +706,9 @@ def generate_meal_plan(
                         # Keep the most recent non-history items
                         non_history_items = [item for item in recently_used if item not in history_recently_used]
                         if non_history_items:
-                            items_to_keep.extend(non_history_items[1:])
+                            # Keep only the most recent max_recently_used items
+                            items_to_keep.extend(non_history_items[-max_recently_used:])
                         recently_used = items_to_keep
-                        # Also trim the recipes_dict accordingly
-                        if len(recently_used_recipes_dict) > max_recently_used:
-                            recently_used_recipes_dict = recently_used_recipes_dict[-max_recently_used:]
                 else:
                     # No suitable recipes found - note this in the plan
                     daily_meals[meal_type] = {
@@ -692,6 +718,21 @@ def generate_meal_plan(
 
         # Add today's meals to the weekly plan
         meal_plan["week"][day_name] = daily_meals
+        
+        # Save the day's recipes for blocking constraint checking
+        # Only add if we have actual recipes (not just placeholders)
+        if current_day_recipes:
+            recently_used_recipes_by_day.append(current_day_recipes)
+            
+            # Trim the by-day list to avoid unbounded growth
+            # Keep only enough days for the longest blocking constraint
+            max_blocking_days = max(
+                constraints.get("blocking", {}).get("protein_blocking", {}).get("max_consecutive_days", 1),
+                constraints.get("blocking", {}).get("cuisine_blocking", {}).get("max_consecutive_days", 2),
+                constraints.get("blocking", {}).get("cooking_method_blocking", {}).get("max_consecutive_days", 2),
+            )
+            if len(recently_used_recipes_by_day) > max_blocking_days:
+                recently_used_recipes_by_day = recently_used_recipes_by_day[-max_blocking_days:]
 
         # Move to the next day
         current_date += timedelta(days=1)

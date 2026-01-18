@@ -325,7 +325,11 @@ def calculate_constraint_penalties(
             })
     
     # Check avoid_consecutive_ingredients constraint
-    if variety_config.get("avoid_consecutive_ingredients", False):
+    # DISABLED: This feature is disabled pending a more comprehensive implementation
+    # that properly parses ingredient lists rather than just checking protein.
+    # The current simplified implementation essentially duplicates protein blocking.
+    # TODO: Re-enable with proper ingredient parsing in future iteration
+    if False and variety_config.get("avoid_consecutive_ingredients", False):
         prev_ingredients = set()
         for day_name, meals in meal_plan.get("week", {}).items():
             day_ingredients = set()
@@ -491,11 +495,27 @@ def format_score_summary(score: dict[str, Any]) -> str:
     
     # Constraint penalties
     const = score["constraint_penalties"]
-    if const['missing_meals'] > 0:
+    has_missing_meals = const.get('missing_meals', 0) > 0
+    has_variety_violations = const.get('variety_violations', 0) > 0
+    
+    if has_missing_meals or has_variety_violations:
         lines.append("### Constraint Violations")
-        lines.append(f"- Missing meals: {const['missing_meals']}")
-        for v in const['violations']:
-            lines.append(f"  - {v['day']} {v['meal_type']}")
+        
+        if has_missing_meals:
+            lines.append(f"- Missing meals: {const['missing_meals']}")
+            for v in const.get('violations', []):
+                if v.get('type') == 'missing_meal':
+                    lines.append(f"  - {v['day']} {v['meal_type']}")
+        
+        if has_variety_violations:
+            lines.append(f"- Variety violations: {const.get('variety_violations', 0)}")
+            for v in const.get('violations', []):
+                if v.get('type') == 'insufficient_cuisine_variety':
+                    lines.append(f"  - Insufficient cuisine variety: {v.get('actual', 0)} < {v.get('expected', 0)} required")
+                elif v.get('type') == 'consecutive_ingredients':
+                    ingredients = ', '.join(v.get('ingredients', []))
+                    lines.append(f"  - Consecutive ingredients on {v.get('day')}: {ingredients}")
+        
         lines.append(f"- **Subtotal**: {const['total']}")
         lines.append("")
     
