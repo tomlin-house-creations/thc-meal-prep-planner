@@ -208,7 +208,8 @@ def clean_ingredient_name(name: str) -> str:
 
     # Remove "and X" suffix (e.g., "salt and pepper" -> "salt")
     # This helps merge seasoning combinations
-    name = re.sub(r"\s+and\s+\w+$", "", name)
+    # Match multi-word phrases after "and" by being greedy
+    name = re.sub(r"\s+and\s+.+$", "", name)
 
     # Handle "juice of X" format - extract just the citrus
     juice_match = re.match(r"juice of \d+\s+(.+)", name, flags=re.IGNORECASE)
@@ -264,21 +265,73 @@ def parse_ingredient_line(line: str) -> Optional[Tuple[str, str, str]]:
     if not line or line.startswith("#"):
         return None
 
-    # Pattern to match quantity + optional unit + ingredient name
-    # Handles: "2 cups flour", "1/2 tsp salt", "3-4 tbsp oil", "8 eggs"
-    pattern = r"^([\d./\-]+\s*(?:to\s+[\d./\-]+)?)\s*([a-zA-Z]*)\s+(.+)$"
-    match = re.match(pattern, line)
+    # Common measurement units - check if present to distinguish from ingredient names
+    common_units = {
+        "tbsp",
+        "tbs",
+        "tb",
+        "tsp",
+        "ts",
+        "t",
+        "cup",
+        "cups",
+        "c",
+        "oz",
+        "ounce",
+        "ounces",
+        "lb",
+        "lbs",
+        "pound",
+        "pounds",
+        "g",
+        "gram",
+        "grams",
+        "kg",
+        "ml",
+        "l",
+        "can",
+        "cans",
+        "jar",
+        "jars",
+        "package",
+        "packages",
+        "box",
+        "boxes",
+        "large",
+        "medium",
+        "small",
+        "whole",
+        "tablespoon",
+        "tablespoons",
+        "teaspoon",
+        "teaspoons",
+        "clove",
+        "cloves",
+        "count",
+    }
+
+    # Try pattern with explicit unit first
+    # Matches: "2 cups flour" or "1/2 tsp salt"
+    pattern_with_unit = r"^([\d./\-]+(?:\s+to\s+[\d./\-]+)?)\s+(\S+)\s+(.+)$"
+    match = re.match(pattern_with_unit, line)
 
     if match:
         quantity = match.group(1).strip()
-        unit = match.group(2).strip()
-        name = match.group(3).strip()
-        # Clean the ingredient name
-        name = clean_ingredient_name(name)
-        return (quantity, unit, name)
+        potential_unit = match.group(2).strip()
+        potential_name = match.group(3).strip()
 
-    # Handle cases without explicit quantity (e.g., "Salt to taste", "Fresh herbs")
-    # Default to quantity of 1 with no unit
+        # Check if the second word is actually a measurement unit
+        if potential_unit.lower() in common_units:
+            # It's a unit! Clean and return
+            name = clean_ingredient_name(potential_name)
+            return (quantity, potential_unit, name)
+        else:
+            # Not a unit - the whole "unit + name" is the ingredient name
+            full_name = f"{potential_unit} {potential_name}"
+            name = clean_ingredient_name(full_name)
+            return (quantity, "", name)
+
+    # If no match, treat as ingredient without quantity
     cleaned_name = clean_ingredient_name(line)
     return ("1", "", cleaned_name)
 
@@ -288,6 +341,9 @@ def normalize_unit(unit: str) -> str:
 
     Converts common abbreviations and variations to standardized units
     for consistent grouping and display.
+
+    Note: In recipes, capital 'T' is often used for tablespoon, lowercase 't' for teaspoon.
+    However, we normalize case-insensitively to handle various styles.
 
     Args:
         unit: Unit string to normalize (e.g., "tbsp", "T", "tablespoon")
@@ -305,7 +361,8 @@ def normalize_unit(unit: str) -> str:
     """
     unit_lower = unit.lower()
 
-    # Tablespoon variations (note: 'T' is capital for tablespoon, 't' for teaspoon)
+    # Tablespoon variations
+    # Note: Including just lowercase since we normalize via .lower() above
     if unit_lower in ["tbsp", "tbs", "tb", "tablespoon", "tablespoons"]:
         return "tablespoon"
 
@@ -597,6 +654,43 @@ def format_quantity(quantity: float) -> str:
     return f"{quantity:.1f}"
 
 
+def pluralize_unit(unit: str, quantity: float) -> str:
+    """Pluralize a unit based on quantity.
+
+    Adds 's' to unit names when quantity is greater than 1, following
+    common English pluralization rules for measurement units.
+
+    Args:
+        unit: Unit name (e.g., "cup", "tablespoon")
+        quantity: Numeric quantity
+
+    Returns:
+        Pluralized unit if quantity > 1, otherwise singular form.
+        Returns empty string if unit is empty.
+
+    Examples:
+        >>> pluralize_unit("cup", 2.0)
+        'cups'
+        >>> pluralize_unit("cup", 1.0)
+        'cup'
+        >>> pluralize_unit("tablespoon", 0.5)
+        'tablespoon'
+        >>> pluralize_unit("", 5.0)
+        ''
+    """
+    # Return empty string if unit is empty (ingredient counted by item)
+    if not unit:
+        return ""
+
+    # Don't pluralize if quantity is 1 or less
+    if quantity <= 1:
+        return unit
+
+    # Most units just add 's'
+    # Special cases handled here if needed in the future
+    return f"{unit}s"
+
+
 def generate_grocery_list_from_recipes(
     recipe_names: List[str], recipes_dir: Path
 ) -> str:
@@ -679,9 +773,12 @@ def generate_grocery_list_from_recipes(
         for ingredient_name, unit, quantity in items:
             qty_str = format_quantity(quantity)
 
+            # Pluralize unit based on quantity
+            unit_display = pluralize_unit(unit, quantity)
+
             # Format: "- [ ] 2 cups flour" or "- [ ] 8 eggs" (no unit)
-            if unit:
-                output_lines.append(f"- [ ] {qty_str} {unit} {ingredient_name}")
+            if unit_display:
+                output_lines.append(f"- [ ] {qty_str} {unit_display} {ingredient_name}")
             else:
                 output_lines.append(f"- [ ] {qty_str} {ingredient_name}")
 
