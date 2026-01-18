@@ -467,7 +467,7 @@ def generate_meal_plan(
     # provide clear error messages if the constraints file is misconfigured.
     week_constraints = constraints.get("week")
     if not isinstance(week_constraints, dict):
-        raise ValueError("Constraints file is missing required 'time' section.")
+        raise ValueError("Constraints file is missing required 'week' section.")
     
     try:
         start_date_str = week_constraints["start_date"]
@@ -561,10 +561,13 @@ def generate_meal_plan(
                     max_tracking = max_recently_used + len(history_recently_used)
                     if len(recently_used) > max_tracking:
                         # Only remove items not from history
-                        for item in recently_used[:]:
-                            if item not in history_recently_used:
-                                recently_used.remove(item)
-                                break
+                        # Create a new list with items to keep
+                        items_to_keep = [item for item in recently_used if item in history_recently_used]
+                        # Keep the most recent non-history items
+                        non_history_items = [item for item in recently_used if item not in history_recently_used]
+                        if non_history_items:
+                            items_to_keep.extend(non_history_items[1:])
+                        recently_used = items_to_keep
                 else:
                     # No suitable recipes found - note this in the plan
                     daily_meals[meal_type] = {
