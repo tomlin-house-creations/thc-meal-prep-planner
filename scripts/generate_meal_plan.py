@@ -275,16 +275,18 @@ def extract_significant_words(text: str) -> list[str]:
         text: The text to extract words from
         
     Returns:
-        List of significant words (length > MIN_WORD_LENGTH_FOR_MATCHING)
+        List of significant words (length >= MIN_WORD_LENGTH_FOR_MATCHING)
         
     Example:
         words = extract_significant_words("The Grilled Chicken")
         # Returns: ["grilled", "chicken"]
+        words = extract_significant_words("Green Tea")
+        # Returns: ["green", "tea"]
     """
     return [
         word
         for word in text.lower().split()
-        if len(word) > MIN_WORD_LENGTH_FOR_MATCHING
+        if len(word) >= MIN_WORD_LENGTH_FOR_MATCHING
     ]
 
 
@@ -376,7 +378,7 @@ def select_meal_with_llm(
             recipe_words = extract_significant_words(recipe_title)
             recipe_lower = recipe_title.lower()
             
-            # Check bidirectional matching: LLM words in recipe OR recipe words in LLM
+            # Check bidirectional word matching: LLM words in recipe OR recipe words in LLM
             # This catches both "Chicken Teriyaki" -> "Teriyaki Chicken Bowl"
             # and "Grilled Salmon" -> "Salmon"
             if (
@@ -387,6 +389,21 @@ def select_meal_with_llm(
                 print(f"   🤖 LLM suggested '{llm_suggestion}', "
                       f"matched with recipe: {recipe.get('title')}")
                 return recipe
+        
+        # Fallback: If word-based matching failed (e.g., both lists are empty
+        # or no matches found), try exact substring matching
+        # This handles cases like "Tea" matching "Green Tea"
+        if not llm_words or not any(
+            extract_significant_words(r.get("title", ""))
+            for r in suitable_recipes
+        ):
+            for recipe in suitable_recipes:
+                recipe_lower = recipe.get("title", "").lower()
+                # Check if either string is a substring of the other
+                if llm_lower in recipe_lower or recipe_lower in llm_lower:
+                    print(f"   🤖 LLM suggested '{llm_suggestion}', "
+                          f"matched with recipe (substring): {recipe.get('title')}")
+                    return recipe
     
     # If no LLM suggestion or no matching recipe, use random selection
     # This is the original deterministic behavior
