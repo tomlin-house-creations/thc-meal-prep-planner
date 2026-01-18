@@ -4,7 +4,7 @@
 
 - [ ] 1 avocado
 - [ ] 1 bell pepper
-- [ ] 2 tablespoon cilantro
+- [ ] 2 tablespoons cilantro
 - [ ] 1/2 onion
 
 ## Dairy

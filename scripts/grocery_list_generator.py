@@ -677,6 +677,8 @@ def pluralize_unit(unit: str, quantity: float) -> str:
         'tablespoon'
         >>> pluralize_unit("", 5.0)
         ''
+        >>> pluralize_unit("cloves", 2.0)
+        'cloves'
     """
     # Return empty string if unit is empty (ingredient counted by item)
     if not unit:
@@ -686,8 +688,11 @@ def pluralize_unit(unit: str, quantity: float) -> str:
     if quantity <= 1:
         return unit
 
+    # Don't add 's' if already plural (ends with 's', 'es', etc.)
+    if unit.endswith("s") or unit.endswith("es"):
+        return unit
+
     # Most units just add 's'
-    # Special cases handled here if needed in the future
     return f"{unit}s"
 
 
