@@ -82,6 +82,14 @@ except ImportError:
     SCORING_UTILS_AVAILABLE = False
     print("⚠️  Warning: variety_scoring not available - scoring disabled")
 
+# Import grocery list generator utilities
+try:
+    from grocery_list_generator import generate_grocery_list_from_recipes
+    GROCERY_LIST_UTILS_AVAILABLE = True
+except ImportError:
+    GROCERY_LIST_UTILS_AVAILABLE = False
+    print("⚠️  Warning: grocery_list_generator not available - grocery lists disabled")
+
 
 # ==============================================================================
 # CONFIGURATION - Settings for meal plan generation
@@ -867,6 +875,72 @@ def save_meal_plan(
     return output_path
 
 
+def generate_and_save_grocery_list(
+    meal_plan: dict[str, Any],
+    output_dir: Path,
+    recipes_dir: Path,
+) -> Optional[Path]:
+    """Generate and save a grocery list from the meal plan.
+    
+    This function extracts all recipes from the meal plan, generates a
+    comprehensive grocery list with merged ingredients, and saves it
+    alongside the meal plan.
+    
+    Args:
+        meal_plan: The complete meal plan containing all weekly meals
+        output_dir: Directory where the grocery list should be saved
+        recipes_dir: Directory containing recipe markdown files
+        
+    Returns:
+        Path to the saved grocery list file, or None if generation failed
+        
+    Example:
+        grocery_path = generate_and_save_grocery_list(
+            meal_plan, Path("plans/"), Path("recipes/")
+        )
+        if grocery_path:
+            print(f"Grocery list saved to {grocery_path}")
+    """
+    if not GROCERY_LIST_UTILS_AVAILABLE:
+        print("⚠️  Skipping grocery list generation (module not available)")
+        return None
+    
+    # Extract all unique recipe filenames from the meal plan
+    recipe_names = []
+    
+    for day_name, meals in meal_plan.get("week", {}).items():
+        for meal_type, meal_data in meals.items():
+            # Get the recipe filename
+            filename = meal_data.get("filename")
+            if filename and filename not in recipe_names:
+                # Remove .md extension if present
+                recipe_name = filename.replace(".md", "")
+                recipe_names.append(recipe_name)
+    
+    if not recipe_names:
+        print("⚠️  No recipes found in meal plan - skipping grocery list")
+        return None
+    
+    print(f"\n🛒 Generating grocery list from {len(recipe_names)} recipes...")
+    
+    # Generate the grocery list
+    grocery_list_content = generate_grocery_list_from_recipes(
+        recipe_names,
+        recipes_dir
+    )
+    
+    # Create filename matching the meal plan
+    grocery_filename = f"grocery_list_{meal_plan['week_start']}.md"
+    grocery_path = output_dir / grocery_filename
+    
+    # Save the grocery list
+    with open(grocery_path, "w", encoding="utf-8") as f:
+        f.write(grocery_list_content)
+    
+    print(f"✅ Saved grocery list to {grocery_path}")
+    return grocery_path
+
+
 # ==============================================================================
 # MAIN FUNCTION - This is where the program starts
 # ==============================================================================
@@ -939,6 +1013,11 @@ def main() -> None:
         # Step 6: Save the meal plan
         output_path = save_meal_plan(meal_plan, plans_dir, constraints, score)
         
+        # Step 6.5: Generate and save grocery list
+        grocery_list_path = generate_and_save_grocery_list(
+            meal_plan, plans_dir, recipes_dir
+        )
+        
         # Step 7: Save to history if enabled
         if HISTORY_UTILS_AVAILABLE:
             history_config = constraints.get("history", {})
@@ -955,12 +1034,20 @@ def main() -> None:
         print("=" * 70)
         print()
         print(f"📄 View your meal plan: {output_path}")
+        if grocery_list_path:
+            print(f"🛒 View your grocery list: {grocery_list_path}")
         print()
         print("Next steps:")
         print("  1. Open the meal plan file to see your weekly schedule")
-        print("  2. Add more recipes to the recipes/ folder for more variety")
-        print("  3. Try creating a different profile in profiles/")
-        print("  4. Adjust constraints in constraints/sample_constraints.yaml")
+        if grocery_list_path:
+            print("  2. Use the grocery list for your shopping trip")
+            print("  3. Add more recipes to the recipes/ folder for more variety")
+            print("  4. Try creating a different profile in profiles/")
+            print("  5. Adjust constraints in constraints/sample_constraints.yaml")
+        else:
+            print("  2. Add more recipes to the recipes/ folder for more variety")
+            print("  3. Try creating a different profile in profiles/")
+            print("  4. Adjust constraints in constraints/sample_constraints.yaml")
         print()
 
     except FileNotFoundError as e:
