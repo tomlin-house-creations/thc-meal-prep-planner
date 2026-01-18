@@ -237,7 +237,7 @@ def build_meal_suggestion_prompt(
     prompt = f"""You are a creative meal planning assistant. Suggest a {meal_type_safe} meal idea.
 
 Context:
-- Meal type: {meal_type}
+- Meal type: {meal_type_safe}
 - Day type: {time_context}
 - Maximum preparation time: {max_time} minutes
 - Dietary restrictions: {dietary_restrictions}

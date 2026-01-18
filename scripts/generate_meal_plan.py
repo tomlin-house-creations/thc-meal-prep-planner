@@ -345,16 +345,19 @@ def select_meal_with_llm(
     # similar to one of our recipes, prefer that one
     if llm_suggestion:
         llm_lower = llm_suggestion.lower()
+        llm_words = [w for w in llm_lower.split() if len(w) > MIN_WORD_LENGTH_FOR_MATCHING]
+        
         # Look for recipes that match the LLM suggestion
         for recipe in suitable_recipes:
             recipe_title = recipe.get("title", "").lower()
-            # Check if there's significant overlap in words
-            # Only consider words longer than MIN_WORD_LENGTH_FOR_MATCHING
-            # to filter out articles and prepositions
-            if any(
-                word in recipe_title
-                for word in llm_lower.split()
-                if len(word) > MIN_WORD_LENGTH_FOR_MATCHING
+            recipe_words = [w for w in recipe_title.split() if len(w) > MIN_WORD_LENGTH_FOR_MATCHING]
+            
+            # Check bidirectional matching: LLM words in recipe OR recipe words in LLM
+            # This catches both "Chicken Teriyaki" -> "Teriyaki Chicken Bowl"
+            # and "Grilled Salmon" -> "Salmon"
+            if (
+                any(word in recipe_title for word in llm_words) or
+                any(word in llm_lower for word in recipe_words)
             ):
                 # Found a match! Use this recipe
                 print(f"   🤖 LLM suggested '{llm_suggestion}', "
