@@ -282,6 +282,13 @@ def generate_meal_plan(
 
     start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
     end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
+    
+    # Validate that start_date is not after end_date
+    if start_date > end_date:
+        raise ValueError(
+            f"Invalid date range: start_date ({start_date_str}) is after end_date ({end_date_str}). "
+            "Please ensure start_date comes before or equals end_date."
+        )
 
     # Create the structure to hold our meal plan
     meal_plan = {
