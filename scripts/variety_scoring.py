@@ -186,11 +186,13 @@ def calculate_recipe_diversity_score(meal_plan: dict[str, Any]) -> dict[str, Any
     """
     recipes = []
     
-    # Collect all recipes used
+    # Collect all recipes used, excluding placeholder entries
     for day_name, meals in meal_plan.get("week", {}).items():
         for meal_type, recipe in meals.items():
             recipe_title = recipe.get("title")
-            if recipe_title:
+            # Skip placeholder meals whose titles start with "No "
+            # (e.g., "No breakfast recipe available")
+            if recipe_title and not recipe_title.startswith("No "):
                 recipes.append(recipe_title)
     
     # Calculate score
