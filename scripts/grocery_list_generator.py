@@ -70,7 +70,9 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "zucchini",
         "squash",
         "mushroom",
-        "pea",
+        "peas",
+        "snap peas",
+        "snow peas",
     ],
     "Meat": [
         "chicken",
@@ -130,6 +132,9 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "beans",
         "black beans",
         "chickpeas",
+        "black-eyed peas",
+        "dried peas",
+        "split peas",
         "stock",
         "broth",
         "sauce",
@@ -467,6 +472,11 @@ def categorize_ingredient(ingredient_name: str) -> str:
     6. Produce - fresh vegetables and fruits (checked later to avoid conflicts)
     7. Other - fallback for unmatched items
 
+    Note: Uses word boundary matching to avoid partial word matches.
+    For example, "black-eyed peas" won't match "pea" in Produce since
+    "pea" is not a complete word. Multi-word keywords like "bell pepper"
+    use substring matching.
+
     Args:
         ingredient_name: Name of the ingredient to categorize
 
@@ -482,6 +492,8 @@ def categorize_ingredient(ingredient_name: str) -> str:
         'Dairy'
         >>> categorize_ingredient("corn tortillas")
         'Bakery'
+        >>> categorize_ingredient("black-eyed peas")
+        'Pantry'
     """
     ingredient_lower = ingredient_name.lower()
 
@@ -493,8 +505,30 @@ def categorize_ingredient(ingredient_name: str) -> str:
         if category in CATEGORY_KEYWORDS:
             keywords = CATEGORY_KEYWORDS[category]
             for keyword in keywords:
-                if keyword in ingredient_lower:
-                    return category
+                # For multi-word keywords (containing spaces), use substring matching
+                if " " in keyword:
+                    if keyword in ingredient_lower:
+                        return category
+                else:
+                    # For single-word keywords, use word boundary matching with plural support
+                    # This prevents "pea" from matching "black-eyed peas"
+                    # but allows "egg" to match "eggs" and "tomato" to match "tomatoes"
+
+                    # Try exact match first
+                    pattern = r"\b" + re.escape(keyword) + r"\b"
+                    if re.search(pattern, ingredient_lower):
+                        return category
+
+                    # Try with common plural forms (add 's', 'es')
+                    # Only for keywords that don't already end in 's'
+                    if not keyword.endswith("s"):
+                        plural_patterns = [
+                            r"\b" + re.escape(keyword) + r"s\b",  # egg -> eggs
+                            r"\b" + re.escape(keyword) + r"es\b",  # tomato -> tomatoes
+                        ]
+                        for plural_pattern in plural_patterns:
+                            if re.search(plural_pattern, ingredient_lower):
+                                return category
 
     # Default to "Other" if no category match found
     return "Other"
@@ -831,22 +865,29 @@ def generate_grocery_list_from_meal_plan(meal_plan_path: Path) -> str:
         matches = re.findall(pattern, content)
 
         for match in matches:
-            # Skip non-recipe headers (like day names, metadata)
-            if match.strip() and not any(
-                skip in match.lower()
-                for skip in [
-                    "no ",
-                    "recipe available",
-                    "breakfast",
-                    "lunch",
-                    "dinner",
-                    "prep time",
-                    "cook time",
-                    "total time",
-                ]
+            # Normalize matched text for comparison
+            normalized = match.strip().lower()
+
+            # Skip non-recipe headers (like day names, meal section titles, metadata)
+            # Exact-match headers: skip pure section labels such as "**Breakfast**"
+            exact_header_titles = {"breakfast", "lunch", "dinner"}
+
+            # Substring-based skips: metadata and non-recipe notes
+            metadata_substrings = [
+                "no ",
+                "recipe available",
+                "prep time",
+                "cook time",
+                "total time",
+            ]
+
+            if (
+                normalized
+                and normalized not in exact_header_titles
+                and not any(substr in normalized for substr in metadata_substrings)
             ):
                 # Convert to filename format (e.g., "Breakfast Burritos" -> "breakfast-burritos")
-                recipe_filename = match.strip().lower().replace(" ", "-")
+                recipe_filename = normalized.replace(" ", "-")
                 if recipe_filename not in recipe_names:
                     recipe_names.append(recipe_filename)
 

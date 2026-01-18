@@ -1,25 +1,133 @@
 {
   "version": "1.0",
-  "created_at": "2026-01-18T23:09:44.875386",
+  "created_at": "2026-01-18T23:33:24.886531",
   "ttl_days": 30,
-  "expires_at": "2026-02-17T23:09:44.875392",
+  "expires_at": "2026-02-17T23:33:24.886539",
   "week_start": "2026-01-20",
   "week_end": "2026-01-26",
   "profile_name": "Ashuah Patel",
   "meals": {
     "Tuesday": {
       "breakfast": {
-        "title": "Breakfast Burritos",
-        "filename": "breakfast-burritos.md",
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
         "category": "Breakfast",
-        "cuisine": null
+        "cuisine": "American"
+      },
+      "lunch": {
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
+      },
+      "dinner": {
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
       }
     },
-    "Wednesday": {},
-    "Thursday": {},
-    "Friday": {},
-    "Saturday": {},
-    "Sunday": {},
-    "Monday": {}
+    "Wednesday": {
+      "lunch": {
+        "title": "Mediterranean Quinoa Bowl",
+        "filename": "mediterranean-quinoa-bowl.md",
+        "category": "Lunch",
+        "cuisine": "Mediterranean"
+      },
+      "dinner": {
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
+      }
+    },
+    "Thursday": {
+      "breakfast": {
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
+        "category": "Breakfast",
+        "cuisine": "American"
+      },
+      "lunch": {
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
+      },
+      "dinner": {
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
+      }
+    },
+    "Friday": {
+      "lunch": {
+        "title": "Mediterranean Quinoa Bowl",
+        "filename": "mediterranean-quinoa-bowl.md",
+        "category": "Lunch",
+        "cuisine": "Mediterranean"
+      },
+      "dinner": {
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
+      }
+    },
+    "Saturday": {
+      "breakfast": {
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
+        "category": "Breakfast",
+        "cuisine": "American"
+      },
+      "lunch": {
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
+      },
+      "dinner": {
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
+      }
+    },
+    "Sunday": {
+      "lunch": {
+        "title": "Mediterranean Quinoa Bowl",
+        "filename": "mediterranean-quinoa-bowl.md",
+        "category": "Lunch",
+        "cuisine": "Mediterranean"
+      },
+      "dinner": {
+        "title": "Fish Tacos",
+        "filename": "fish-tacos.md",
+        "category": "Dinner",
+        "cuisine": "Mexican"
+      }
+    },
+    "Monday": {
+      "breakfast": {
+        "title": "Overnight Oats",
+        "filename": "overnight-oats.md",
+        "category": "Breakfast",
+        "cuisine": "American"
+      },
+      "lunch": {
+        "title": "Grilled Chicken Salad",
+        "filename": "grilled-chicken-salad.md",
+        "category": "Lunch",
+        "cuisine": "American"
+      },
+      "dinner": {
+        "title": "Veggie Stir Fry",
+        "filename": "veggie-stir-fry.md",
+        "category": "Dinner",
+        "cuisine": "Asian"
+      }
+    }
   }
 }
