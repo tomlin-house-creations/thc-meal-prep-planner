@@ -25,7 +25,7 @@ classifiers = [
 ]
 
 dependencies = [
-    # Core dependencies will be added as development progresses
+    "PyYAML>=6.0.0",
 ]
 
 [project.optional-dependencies]

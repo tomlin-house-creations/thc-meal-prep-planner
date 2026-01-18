@@ -1,0 +1,48 @@
+# Sample Constraints for Meal Plan Generation
+# 
+# This file demonstrates how to define constraints for the meal plan generator.
+# Think of constraints as the "rules" the generator must follow when creating a plan.
+
+# Week Configuration
+week:
+  # Which week are we planning for?
+  start_date: "2026-01-20"  # Monday (YYYY-MM-DD format)
+  end_date: "2026-01-26"     # Sunday
+
+# Meal Requirements
+# How many of each meal type do we need for the week?
+meals_per_day:
+  breakfast: 1  # One breakfast per day
+  lunch: 1      # One lunch per day  
+  dinner: 1     # One dinner per day
+  snack: 0      # No snacks for this simple demo
+
+# Budget Constraints (optional - not enforced in basic version)
+budget:
+  max_per_week: 150.00  # Maximum weekly grocery budget in dollars
+  currency: "USD"
+
+# Time Constraints
+time:
+  # Maximum time to spend preparing meals on a weeknight
+  max_weeknight_prep_minutes: 30
+  
+  # Maximum time on weekend days (we have more time!)
+  max_weekend_prep_minutes: 60
+
+# Variety Requirements
+# We don't want to eat the same thing every day!
+variety:
+  # Don't repeat the same recipe within this many days
+  min_days_between_repeats: 3
+  
+  # Try to use different cuisines throughout the week
+  prefer_cuisine_variety: true
+
+# Nutritional Balance (optional - informational only in basic version)
+nutrition:
+  # Should we try to balance nutrition across the week?
+  balance_macros: true
+  
+  # Target average calories per day
+  target_calories_per_day: 2000

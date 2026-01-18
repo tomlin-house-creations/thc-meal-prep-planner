@@ -41,24 +41,36 @@ This project is in early development. The following features are planned:
 
 ### Installation
 
-This project is currently in the planning and setup phase. When code is available:
-
 ```bash
 # Clone the repository
 git clone https://github.com/tomlin-house-creations/thc-meal-prep-planner.git
 cd thc-meal-prep-planner
 
-# Backend setup (when available)
-cd backend
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+# Install Python dependencies
 pip install -r requirements.txt
-
-# Frontend setup (when available)
-cd frontend
-npm install
-npm run dev
 ```
+
+### Quick Start: Generate a Meal Plan
+
+Try out the meal plan generator to see the system in action:
+
+```bash
+# Run the meal plan generator
+python scripts/generate_meal_plan.py
+```
+
+**What this does:**
+- Loads a sample user profile from `profiles/ashuah.md`
+- Reads available recipes from `recipes/`
+- Applies constraints from `constraints/sample_constraints.yaml`
+- Generates a weekly meal plan in `plans/meal_plan_YYYY-MM-DD.md`
+
+**To customize:**
+- Add more recipes to `recipes/` folder (use `breakfast-burritos.md` as a template)
+- Create your own profile in `profiles/` folder
+- Adjust planning rules in `constraints/sample_constraints.yaml`
+
+The script includes thorough ELI5 (Explain Like I'm 5) documentation, making it perfect for learning how the system works!
 
 ## Documentation
 

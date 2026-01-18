@@ -5,3 +5,6 @@
 #
 # Note: Core dependencies will be added as development progresses.
 # The project uses pyproject.toml as the primary configuration.
+
+# YAML parsing for configuration files
+PyYAML>=6.0.0
