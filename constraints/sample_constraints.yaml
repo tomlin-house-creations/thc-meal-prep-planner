@@ -6,8 +6,8 @@
 # Week Configuration
 week:
   # Which week are we planning for?
-  start_date: "2026-01-20"  # Monday (YYYY-MM-DD format)
-  end_date: "2026-01-26"     # Sunday
+  start_date: "2026-01-20"  # Tuesday (YYYY-MM-DD format)
+  end_date: "2026-01-26"     # Monday
 
 # Meal Requirements
 # How many of each meal type do we need for the week?

@@ -204,16 +204,25 @@ def is_recipe_suitable(
     # For this simple version, we just check cooking time
     # Future: Add checks for profile allergies, dietary restrictions, preferences
 
+    # Get the time constraints with validation
+    time_constraints = constraints.get("time")
+    if not isinstance(time_constraints, dict):
+        raise ValueError("Constraints file is missing required 'time' section.")
+    
     # Get the time limit based on whether it's a weeknight or weekend
-    if is_weeknight:
-        max_time = constraints["time"]["max_weeknight_prep_minutes"]
-    else:
-        max_time = constraints["time"]["max_weekend_prep_minutes"]
-
-    # Try to get the total time from the recipe
-    # If the recipe doesn't have time info, assume it fits within weeknight constraints
-    # (This is a reasonable default since most quick recipes don't specify time)
-    default_time = constraints["time"]["max_weeknight_prep_minutes"]
+    try:
+        if is_weeknight:
+            max_time = time_constraints["max_weeknight_prep_minutes"]
+        else:
+            max_time = time_constraints["max_weekend_prep_minutes"]
+        
+        # Also get the default time for recipes without time info
+        default_time = time_constraints["max_weeknight_prep_minutes"]
+    except KeyError as exc:
+        missing_key = exc.args[0]
+        raise KeyError(
+            f"Constraints file is missing required key 'time.{missing_key}'."
+        ) from exc
     total_time_str = recipe.get("Total Time", f"{default_time} minutes")
 
     # Extract the number of minutes from strings like "35 minutes"
@@ -256,9 +265,23 @@ def generate_meal_plan(
     """
     print("\n🎯 Generating meal plan...")
 
-    # Get the start and end dates for the week
-    start_date = datetime.strptime(constraints["week"]["start_date"], "%Y-%m-%d")
-    end_date = datetime.strptime(constraints["week"]["end_date"], "%Y-%m-%d")
+    # Get the start and end dates for the week, with validation so we can
+    # provide clear error messages if the constraints file is misconfigured.
+    week_constraints = constraints.get("week")
+    if not isinstance(week_constraints, dict):
+        raise ValueError("Constraints file is missing required 'week' section.")
+    
+    try:
+        start_date_str = week_constraints["start_date"]
+        end_date_str = week_constraints["end_date"]
+    except KeyError as exc:
+        missing_key = exc.args[0]
+        raise KeyError(
+            f"Constraints file is missing required key 'week.{missing_key}'."
+        ) from exc
+
+    start_date = datetime.strptime(start_date_str, "%Y-%m-%d")
+    end_date = datetime.strptime(end_date_str, "%Y-%m-%d")
 
     # Create the structure to hold our meal plan
     meal_plan = {
@@ -271,12 +294,11 @@ def generate_meal_plan(
     # Keep track of recently used recipes to avoid repetition
     recently_used = []
 
-    # Day names for display
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
-
-    # Loop through each day of the week
+    # Loop through each day in the configured week, using actual calendar dates
     current_date = start_date
-    for day_name in days:
+    while current_date <= end_date:
+        # Use the actual day name from the current date (e.g., Monday, Tuesday, ...)
+        day_name = current_date.strftime("%A")
         # Is this a weeknight? (Monday = 0, Sunday = 6)
         is_weeknight = current_date.weekday() < 5  # Monday-Friday
 
@@ -510,7 +532,7 @@ def main() -> None:
     except yaml.YAMLError as e:
         print("❌ Error: There is a problem with your YAML configuration file.")
         print(f"   Details: {e}")
-        print("   Please check the formatting of your constraints file (for example, constraints/sample_constraints.yaml).")
+        print("   Please check the formatting of your YAML constraints file.")
     except Exception as e:
         print(f"❌ Error: Something went wrong: {e}")
         print("   Please check your input files and try again.")
