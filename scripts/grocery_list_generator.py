@@ -778,8 +778,8 @@ def pluralize_ingredient_name(name: str, quantity: float) -> str:
     if quantity <= 1:
         return name
 
-    # Don't pluralize if already appears plural (ends with 's', 'es', or contains plural words)
-    if name.endswith("s") or name.endswith("es"):
+    # Don't pluralize if already appears plural (ends with 's')
+    if name.endswith("s"):
         return name
 
     # Mass nouns and uncountable ingredients that shouldn't be pluralized
@@ -831,8 +831,8 @@ def pluralize_ingredient_name(name: str, quantity: float) -> str:
         return name
 
     # Check if any word in the name is uncountable
-    words = name_lower.split()
-    if any(word in uncountable for word in words):
+    lower_words = name_lower.split()
+    if any(word in uncountable for word in lower_words):
         return name
 
     # Common irregular plurals
@@ -844,27 +844,27 @@ def pluralize_ingredient_name(name: str, quantity: float) -> str:
     }
 
     # Check if the last word matches an irregular plural
-    words = name.split()
-    last_word = words[-1].lower()
+    name_words = name.split()
+    last_word = name_words[-1].lower()
 
     if last_word in irregular_plurals:
-        words[-1] = irregular_plurals[last_word]
-        return " ".join(words)
+        name_words[-1] = irregular_plurals[last_word]
+        return " ".join(name_words)
 
     # Standard pluralization rules
     # Words ending in 'o' -> add 'es' (tomato -> tomatoes, potato -> potatoes)
     if last_word.endswith("o"):
-        words[-1] = last_word + "es"
-        return " ".join(words)
+        name_words[-1] = last_word + "es"
+        return " ".join(name_words)
 
     # Words ending in 'y' after consonant -> change to 'ies' (berry -> berries)
     if len(last_word) > 1 and last_word.endswith("y") and last_word[-2] not in "aeiou":
-        words[-1] = last_word[:-1] + "ies"
-        return " ".join(words)
+        name_words[-1] = last_word[:-1] + "ies"
+        return " ".join(name_words)
 
     # Default: add 's'
-    words[-1] = last_word + "s"
-    return " ".join(words)
+    name_words[-1] = last_word + "s"
+    return " ".join(name_words)
 
 
 def generate_grocery_list_from_recipes(
