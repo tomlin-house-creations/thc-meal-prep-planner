@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://tomlin-house-creations.github.io/thc-meal-prep-planner/sitemap.xml
