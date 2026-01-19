@@ -74,14 +74,16 @@ The site is configured for GitHub Pages in `next.config.ts`:
 
 ```typescript
 const nextConfig: NextConfig = {
-  output: "export",                    // Static export
-  basePath: "/thc-meal-prep-planner",  // GitHub Pages subdirectory
+  output: "export",                              // Static export
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || "",  // GitHub Pages subdirectory
   images: {
-    unoptimized: true,                 // Required for static export
+    unoptimized: true,                           // Required for static export
   },
-  trailingSlash: true,                 // Add trailing slashes
+  trailingSlash: true,                           // Add trailing slashes
 };
 ```
+
+The `NEXT_PUBLIC_BASE_PATH` environment variable is set in the GitHub Actions workflow to `/thc-meal-prep-planner`. For local development, it defaults to empty string.
 
 ### Custom Domain (Optional)
 

@@ -37,6 +37,12 @@ npm run dev
 
 The development server will start at `http://localhost:3000`. The site will automatically reload when you make changes to the code.
 
+**Note**: For local development, the basePath is empty by default. To test with the GitHub Pages basePath:
+
+```bash
+NEXT_PUBLIC_BASE_PATH=/thc-meal-prep-planner npm run dev
+```
+
 ### Project Structure
 
 ```
