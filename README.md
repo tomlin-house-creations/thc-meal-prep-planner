@@ -26,10 +26,11 @@ This project is in early development. The following features are planned:
 
 ## Technology Stack
 
-- **Backend**: Python (planned)
-- **Frontend**: TypeScript/React (planned)
-- **Database**: TBD
-- **Deployment**: TBD
+- **Backend**: Python 
+- **Frontend**: Next.js 16 with React 19 and TypeScript
+- **Styling**: Tailwind CSS v4
+- **Deployment**: GitHub Pages (static site)
+- **Data Storage**: Markdown files + localStorage for UI state
 
 ## Getting Started
 
@@ -48,6 +49,9 @@ cd thc-meal-prep-planner
 
 # Install Python dependencies
 pip install -r requirements.txt
+
+# Install Node.js dependencies (for the website)
+npm install
 ```
 
 ### Quick Start: Generate a Meal Plan
@@ -111,6 +115,32 @@ The CI workflow is already configured to use this secret automatically.
 
 For detailed information, see the **[LLM Integration Guide](docs/LLM_INTEGRATION.md)**.
 
+### Viewing Your Meal Plans (Website)
+
+The project includes a mobile-friendly static website to view your generated meal plans and grocery lists:
+
+```bash
+# Start the development server
+npm run dev
+```
+
+Visit `http://localhost:3000` to see your meal plans and interactive grocery list.
+
+**Features:**
+- 📅 **Meal Plan Viewer**: Browse your weekly meal plans with a clean, responsive layout
+- 🛒 **Interactive Grocery List**: Check off items as you shop with automatic localStorage saving
+- 📱 **Mobile-First Design**: Optimized for phones, tablets, and desktops
+- 🌓 **Dark Mode Support**: Automatically adapts to your system theme
+
+The website reads directly from the markdown files in the `/plans` directory, so any meal plans you generate will automatically appear.
+
+**Build for deployment:**
+```bash
+npm run build
+```
+
+For more information, see the **[Website Development Guide](docs/WEBSITE_DEVELOPMENT.md)**.
+
 ## Documentation
 
 ### Getting Started
@@ -119,6 +149,7 @@ For detailed information, see the **[LLM Integration Guide](docs/LLM_INTEGRATION
 
 ### Features & Usage
 - **[LLM Integration Guide](docs/LLM_INTEGRATION.md)**: Complete guide to AI-powered meal suggestions
+- **[Website Development Guide](docs/WEBSITE_DEVELOPMENT.md)**: How to develop and customize the web interface
 
 ### Standards & Guidelines  
 - **[Code Style Guide](CODE_STYLE.md)**: Coding standards for Python and TypeScript
@@ -155,19 +186,26 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ```
 thc-meal-prep-planner/
+├── app/                     # Next.js application
+│   ├── layout.tsx          # Root layout
+│   ├── page.tsx            # Home page (meal plan viewer)
+│   ├── globals.css         # Global styles
+│   └── grocery-list/       # Grocery list page
+├── lib/                     # Shared utilities
+│   └── meals.ts            # Meal plan/grocery list parsing
 ├── docs/                    # Documentation
 ├── profiles/                # User profiles and preferences
-├── recipes/                 # Recipe database
+├── recipes/                 # Recipe database (Markdown)
 ├── constraints/             # Planning constraints (dietary, budget, time)
 ├── calendars/               # Meal calendars and schedules
 ├── history/                 # Historical meal planning data
-├── plans/                   # Generated meal plans and shopping lists
-├── scripts/                 # Utility scripts
-├── site/                    # Built static site files
+├── plans/                   # Generated meal plans and shopping lists (Markdown)
+├── scripts/                 # Utility scripts (Python)
 ├── .github/                 # GitHub templates and workflows
 │   └── workflows/           # CI/CD workflows
-├── CODE_STYLE.md           # Coding standards
-├── CONTRIBUTING.md         # Contribution guidelines
+├── next.config.ts          # Next.js configuration
+├── tailwind.config.ts      # Tailwind CSS configuration
+├── package.json            # Node.js dependencies
 ├── pyproject.toml          # Python project configuration
 ├── requirements.txt        # Python dependencies
 └── README.md               # This file
