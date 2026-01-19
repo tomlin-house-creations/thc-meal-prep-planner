@@ -70,9 +70,10 @@ CATEGORY_KEYWORDS: Dict[str, List[str]] = {
         "zucchini",
         "squash",
         "mushroom",
-        "peas",
+        "fresh peas",
         "snap peas",
         "snow peas",
+        "corn",
     ],
     "Meat": [
         "chicken",
@@ -204,18 +205,30 @@ def clean_ingredient_name(name: str) -> str:
 
     # Remove common descriptors after commas
     name = re.sub(
-        r",\s*(diced|chopped|sliced|minced|halved|thinly sliced|optional|for serving|drained and rinsed).*$",
+        r",\s*(diced|chopped|sliced|minced|halved|thinly sliced|optional|for serving|for garnish|for topping|for the topping|drained and rinsed|cubed|crumbled|shredded|grated).*$",
         "",
         name,
+        flags=re.IGNORECASE,
+    )
+
+    # Remove trailing "for X" phrases without commas (e.g., "green onions for garnish")
+    name = re.sub(
+        r"\s+for\s+(serving|garnish|topping|the topping)\b.*$",
+        "",
+        name,
+        flags=re.IGNORECASE,
     )
 
     # Remove "to taste" phrases
     name = re.sub(r"\s+to taste.*$", "", name, flags=re.IGNORECASE)
 
-    # Remove "and X" suffix (e.g., "salt and pepper" -> "salt")
-    # This helps merge seasoning combinations
-    # Match multi-word phrases after "and" by being greedy
-    name = re.sub(r"\s+and\s+.+$", "", name)
+    # Remove "or X" alternatives to allow merging (e.g., "honey or maple syrup" -> "honey")
+    name = re.sub(r"\s+or\s+.+$", "", name, flags=re.IGNORECASE)
+
+    # Remove "and X" where X is a single word at the end (e.g., "salt and pepper" -> "salt")
+    # This helps consolidate seasoning combinations
+    # Only apply if it's a simple "and word" pattern at the end
+    name = re.sub(r"\s+and\s+\w+\s*$", "", name, flags=re.IGNORECASE)
 
     # Handle "juice of X" format - extract just the citrus
     juice_match = re.match(r"juice of \d+\s+(.+)", name, flags=re.IGNORECASE)
@@ -225,7 +238,7 @@ def clean_ingredient_name(name: str) -> str:
 
     # Remove qualifier words at the beginning (fresh, dried, etc.)
     name = re.sub(
-        r"^(fresh|dried|frozen|canned|shredded|chopped|sliced|diced|minced)\s+",
+        r"^(fresh|dried|frozen|canned|shredded|chopped|sliced|diced|minced|block|firm|extra|extra-virgin|raw|cooked)\s+",
         "",
         name,
         flags=re.IGNORECASE,
@@ -733,6 +746,67 @@ def pluralize_unit(unit: str, quantity: float) -> str:
     return f"{unit}s"
 
 
+def pluralize_ingredient_name(name: str, quantity: float) -> str:
+    """Pluralize an ingredient name when no unit is specified.
+
+    Applies common English pluralization rules for ingredient names
+    when the quantity is greater than 1 and no measurement unit is present.
+
+    Args:
+        name: Ingredient name (e.g., "avocado", "tomato")
+        quantity: Numeric quantity
+
+    Returns:
+        Pluralized name if quantity > 1, otherwise singular form.
+
+    Examples:
+        >>> pluralize_ingredient_name("avocado", 2.0)
+        'avocados'
+        >>> pluralize_ingredient_name("avocado", 1.0)
+        'avocado'
+        >>> pluralize_ingredient_name("cherry tomatoes", 3.0)
+        'cherry tomatoes'
+    """
+    # Don't pluralize if quantity is 1 or less
+    if quantity <= 1:
+        return name
+
+    # Don't pluralize if already appears plural (ends with 's', 'es', or contains plural words)
+    if name.endswith("s") or name.endswith("es"):
+        return name
+
+    # Common irregular plurals
+    irregular_plurals = {
+        "loaf": "loaves",
+        "leaf": "leaves",
+        "knife": "knives",
+        "half": "halves",
+    }
+
+    # Check if the last word matches an irregular plural
+    words = name.split()
+    last_word = words[-1].lower()
+
+    if last_word in irregular_plurals:
+        words[-1] = irregular_plurals[last_word]
+        return " ".join(words)
+
+    # Standard pluralization rules
+    # Words ending in 'o' -> add 'es' (tomato -> tomatoes, potato -> potatoes)
+    if last_word.endswith("o"):
+        words[-1] = last_word + "es"
+        return " ".join(words)
+
+    # Words ending in 'y' after consonant -> change to 'ies' (berry -> berries)
+    if len(last_word) > 1 and last_word.endswith("y") and last_word[-2] not in "aeiou":
+        words[-1] = last_word[:-1] + "ies"
+        return " ".join(words)
+
+    # Default: add 's'
+    words[-1] = last_word + "s"
+    return " ".join(words)
+
+
 def generate_grocery_list_from_recipes(
     recipe_names: List[str], recipes_dir: Path
 ) -> str:
@@ -822,7 +896,11 @@ def generate_grocery_list_from_recipes(
             if unit_display:
                 output_lines.append(f"- [ ] {qty_str} {unit_display} {ingredient_name}")
             else:
-                output_lines.append(f"- [ ] {qty_str} {ingredient_name}")
+                # Pluralize ingredient name when no unit is specified
+                ingredient_display = pluralize_ingredient_name(
+                    ingredient_name, quantity
+                )
+                output_lines.append(f"- [ ] {qty_str} {ingredient_display}")
 
         output_lines.append("")  # Blank line after each category
 
