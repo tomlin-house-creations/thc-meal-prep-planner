@@ -219,6 +219,9 @@ def clean_ingredient_name(name: str) -> str:
         flags=re.IGNORECASE,
     )
 
+    # Remove "pinch of" and similar quantity qualifiers that become part of the name
+    name = re.sub(r"^(pinch of|dash of|hint of)\s+", "", name, flags=re.IGNORECASE)
+
     # Remove "to taste" phrases
     name = re.sub(r"\s+to taste.*$", "", name, flags=re.IGNORECASE)
 
@@ -410,6 +413,10 @@ def normalize_unit(unit: str) -> str:
     # Can variations
     if unit_lower in ["can", "cans"]:
         return "can"
+
+    # Clove variations (important for garlic merging)
+    if unit_lower in ["clove", "cloves"]:
+        return "clove"
 
     # Count-based (for eggs, items, etc.) - return empty string to merge better
     if unit_lower in ["large", "medium", "small", "whole", "count"]:
@@ -773,6 +780,59 @@ def pluralize_ingredient_name(name: str, quantity: float) -> str:
 
     # Don't pluralize if already appears plural (ends with 's', 'es', or contains plural words)
     if name.endswith("s") or name.endswith("es"):
+        return name
+
+    # Mass nouns and uncountable ingredients that shouldn't be pluralized
+    # These are typically measured by volume/weight even without explicit units
+    uncountable = {
+        "rice",
+        "quinoa",
+        "pasta",
+        "flour",
+        "sugar",
+        "salt",
+        "pepper",
+        "oil",
+        "water",
+        "milk",
+        "juice",
+        "broth",
+        "stock",
+        "cheese",
+        "butter",
+        "yogurt",
+        "parsley",
+        "cilantro",
+        "basil",
+        "oregano",
+        "thyme",
+        "rosemary",  # herbs
+        "cinnamon",
+        "cumin",
+        "paprika",
+        "turmeric",  # spices
+        "lettuce",
+        "spinach",
+        "kale",
+        "arugula",  # leafy greens
+        "garlic powder",
+        "onion powder",
+        "chili powder",  # powders
+        "honey",
+        "syrup",
+        "molasses",  # syrups
+        "tofu",
+        "tempeh",
+        "seitan",  # soy products
+    }
+
+    name_lower = name.lower()
+    if name_lower in uncountable:
+        return name
+
+    # Check if any word in the name is uncountable
+    words = name_lower.split()
+    if any(word in uncountable for word in words):
         return name
 
     # Common irregular plurals
