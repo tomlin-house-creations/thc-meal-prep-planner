@@ -51,6 +51,7 @@ export default function GroceryListClient({ initialGroceryList }: GroceryListCli
   };
 
   const handleClearAll = () => {
+    // TODO: Replace native confirm with a custom modal component for better UX
     if (confirm('Clear all checked items? This cannot be undone.')) {
       setCheckedItems({});
     }
