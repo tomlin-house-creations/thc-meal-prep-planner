@@ -76,7 +76,7 @@ export function getMealPlan(filename: string): MealPlan | null {
   try {
     const fullPath = path.join(plansDirectory, filename);
     const fileContents = fs.readFileSync(fullPath, 'utf8');
-    const { data, content } = matter(fileContents);
+    const { content } = matter(fileContents);
 
     // Parse the markdown content
     const lines = content.split('\n');
@@ -88,6 +88,13 @@ export function getMealPlan(filename: string): MealPlan | null {
     let title = 'Weekly Meal Plan';
     let weekOf = '';
     let generatedOn = '';
+
+    // Helper function to check if a line is a recipe name (not a metadata line)
+    const isRecipeName = (line: string): boolean => {
+      if (!line.startsWith('**')) return false;
+      const excludedKeywords = ['No ', 'Prep Time', 'Cook Time', 'Total Time'];
+      return !excludedKeywords.some(keyword => line.includes(keyword));
+    };
 
     for (const line of lines) {
       // Extract title
@@ -128,13 +135,6 @@ export function getMealPlan(filename: string): MealPlan | null {
           currentMeal = mealType;
         }
       }
-
-      // Helper function to check if a line is a recipe name (not a metadata line)
-      const isRecipeName = (line: string): boolean => {
-        if (!line.startsWith('**')) return false;
-        const excludedKeywords = ['No ', 'Prep Time', 'Cook Time', 'Total Time'];
-        return !excludedKeywords.some(keyword => line.includes(keyword));
-      };
 
       // Recipe name
       if (currentDay && currentMeal && isRecipeName(line)) {

@@ -2,18 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-
-export interface GroceryItem {
-  item: string;
-  checked: boolean;
-}
-
-export interface GroceryList {
-  categories: {
-    [category: string]: GroceryItem[];
-  };
-  rawContent: string;
-}
+import type { GroceryList, GroceryItem } from '@/lib/meals';
 
 interface GroceryListClientProps {
   initialGroceryList: GroceryList | null;
@@ -39,7 +28,11 @@ export default function GroceryListClient({ initialGroceryList }: GroceryListCli
   // Save checked state to localStorage whenever it changes
   useEffect(() => {
     if (!isLoading) {
-      localStorage.setItem('groceryChecklist', JSON.stringify(checkedItems));
+      try {
+        localStorage.setItem('groceryChecklist', JSON.stringify(checkedItems));
+      } catch (error) {
+        console.error('Error saving checked items:', error);
+      }
     }
   }, [checkedItems, isLoading]);
 
