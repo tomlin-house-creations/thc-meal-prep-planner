@@ -15,7 +15,7 @@ The site reads meal plans and grocery lists from the `/plans` directory and disp
 
 ## Prerequisites
 
-- Node.js 18 or higher
+- Node.js 20.9.0 or higher
 - npm (comes with Node.js)
 
 ## Installation
@@ -150,9 +150,7 @@ The site is configured for GitHub Pages deployment with:
 // next.config.ts
 const nextConfig: NextConfig = {
   output: "export",                                  // Enable static export
-  basePath: process.env.NODE_ENV === "production" 
-    ? "/thc-meal-prep-planner" 
-    : "",                                            // GitHub Pages subdirectory
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || "",  // GitHub Pages subdirectory (set via NEXT_PUBLIC_BASE_PATH)
   images: {
     unoptimized: true,                              // Required for static export
   },

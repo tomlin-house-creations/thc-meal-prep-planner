@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { getLatestMealPlan } from '@/lib/meals';
 
 export default function Home() {
-  const mealPlan = getLatestMealPlan();
+  const mealPlan: ReturnType<typeof getLatestMealPlan> = getLatestMealPlan();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-gray-900 dark:to-gray-800">
@@ -25,13 +25,13 @@ export default function Home() {
                 href="/"
                 className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-center"
               >
-                📅 Meal Plan
+                <span aria-hidden="true">📅</span> Meal Plan
               </Link>
               <Link
                 href="/grocery-list"
                 className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-center"
               >
-                🛒 Grocery List
+                <span aria-hidden="true">🛒</span> Grocery List
               </Link>
             </div>
           </div>

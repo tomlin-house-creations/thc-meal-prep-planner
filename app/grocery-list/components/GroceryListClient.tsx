@@ -63,12 +63,21 @@ export default function GroceryListClient({ initialGroceryList }: GroceryListCli
     let total = 0;
     let checked = 0;
     
-    Object.values(initialGroceryList.categories).forEach(items => {
+    // Create a set of valid item keys from current grocery list
+    const validKeys = new Set<string>();
+    Object.entries(initialGroceryList.categories).forEach(([category, items]) => {
+      items.forEach((_, index) => {
+        const itemKey = `${category}-${index}`;
+        validKeys.add(itemKey);
+      });
       total += items.length;
     });
     
-    Object.values(checkedItems).forEach(isChecked => {
-      if (isChecked) checked++;
+    // Only count checked items that exist in current grocery list
+    Object.entries(checkedItems).forEach(([key, isChecked]) => {
+      if (isChecked && validKeys.has(key)) {
+        checked++;
+      }
     });
     
     return {
@@ -109,13 +118,13 @@ export default function GroceryListClient({ initialGroceryList }: GroceryListCli
                 href="/"
                 className="px-6 py-3 bg-indigo-600 text-white rounded-lg font-semibold hover:bg-indigo-700 transition-colors text-center"
               >
-                📅 Meal Plan
+                <span aria-hidden="true">📅</span> Meal Plan
               </Link>
               <Link
                 href="/grocery-list"
                 className="px-6 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-center"
               >
-                🛒 Grocery List
+                <span aria-hidden="true">🛒</span> Grocery List
               </Link>
             </div>
           </div>
@@ -137,6 +146,11 @@ export default function GroceryListClient({ initialGroceryList }: GroceryListCli
                 <div
                   className="bg-green-600 h-4 transition-all duration-300 ease-out"
                   style={{ width: `${progress.percentage}%` }}
+                  role="progressbar"
+                  aria-valuenow={progress.percentage}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label="Shopping progress"
                 />
               </div>
               <p className="text-center mt-2 text-sm text-gray-600 dark:text-gray-300">
