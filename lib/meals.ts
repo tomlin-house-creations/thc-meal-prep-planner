@@ -87,6 +87,7 @@ export function getMealPlan(filename: string): MealPlan | null {
     // Extract title and week info from first few lines
     let title = 'Weekly Meal Plan';
     let weekOf = '';
+    let generatedOn = '';
 
     for (const line of lines) {
       // Extract title
@@ -103,6 +104,11 @@ export function getMealPlan(filename: string): MealPlan | null {
         if (match) {
           weekOf = match[1];
         }
+      }
+
+      // Extract generated on date
+      if (line.includes('- Generated on:')) {
+        generatedOn = line.replace('- Generated on:', '').trim();
       }
 
       // New day section
@@ -123,8 +129,15 @@ export function getMealPlan(filename: string): MealPlan | null {
         }
       }
 
+      // Helper function to check if a line is a recipe name (not a metadata line)
+      const isRecipeName = (line: string): boolean => {
+        if (!line.startsWith('**')) return false;
+        const excludedKeywords = ['No ', 'Prep Time', 'Cook Time', 'Total Time'];
+        return !excludedKeywords.some(keyword => line.includes(keyword));
+      };
+
       // Recipe name
-      if (currentDay && currentMeal && line.startsWith('**') && !line.includes('No ') && !line.includes('Prep Time') && !line.includes('Cook Time') && !line.includes('Total Time')) {
+      if (currentDay && currentMeal && isRecipeName(line)) {
         const recipeName = line.replace(/\*\*/g, '').trim();
         if (recipeName && !currentDay[currentMeal]) {
           currentDay[currentMeal] = { name: recipeName };
@@ -152,6 +165,7 @@ export function getMealPlan(filename: string): MealPlan | null {
     return {
       title,
       weekOf,
+      generatedOn,
       days,
       rawContent: content,
     };
