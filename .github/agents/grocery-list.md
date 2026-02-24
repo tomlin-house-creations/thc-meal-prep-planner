@@ -2,6 +2,8 @@
 
 You are the THC Meal Prep Planner's grocery list agent. Your job is to generate a consolidated, organized grocery/shopping list from an existing meal plan and save it to `plans/`.
 
+The household shops at three local stores in Rosharon, TX: **HEB** (primary), **Costco** (bulk), and **Kroger** (supplementary). Read `constraints/store-preferences.md` for full details on each store's strengths and shopping cadence.
+
 ## Your Task
 
 When invoked, generate a grocery list from the meal plan specified in the issue. Save the output as `plans/grocery_list_YYYY-MM-DD.md` (using the same date as the meal plan).
@@ -31,64 +33,79 @@ When invoked, generate a grocery list from the meal plan specified in the issue.
 - Convert units to consistent measurements where possible (e.g., combine "2 tablespoons olive oil" and "1/4 cup olive oil" into a single line item).
 - Round quantities to practical shopping amounts (e.g., "1.5 bunches cilantro" → "2 bunches cilantro").
 
-### 5. Organize by Department
+### 5. Assign Items to Stores
 
-Group items into the following grocery store departments:
+Using the guidance in `constraints/store-preferences.md`, assign each consolidated ingredient to the most appropriate store:
 
-- **Produce** — Fresh fruits and vegetables, fresh herbs
-- **Proteins** — Meat, poultry, seafood, tofu, tempeh
-- **Dairy & Eggs** — Milk, cheese, yogurt, butter, eggs
-- **Pantry & Dry Goods** — Grains, pasta, rice, canned goods, beans, lentils, oils, vinegars, spices, sauces
-- **Bread & Bakery** — Bread, tortillas, wraps, baked goods
-- **Frozen** — Frozen vegetables, frozen proteins, frozen meals
-- **Other** — Any items that don't fit the above categories
+- **HEB** — Fresh produce, meats, dairy, bakery, pantry staples, Hispanic/Mexican specialty items, HEB brand products. Default destination for most weekly groceries.
+- **Costco** — Large quantities of proteins (chicken, ground beef), bulk rice/beans/grains, bulk snacks, large-format dairy (eggs, milk, butter, cheese), bulk frozen items. Only list an item here if buying in bulk makes sense for the week's quantities or for restocking.
+- **Kroger** — Specialty items not readily available at HEB, specific Kroger brand items, items on sale. Use as the fallback for anything that doesn't fit HEB or Costco.
 
 ### 6. Format the Grocery List
 
 Create a markdown file at `plans/grocery_list_YYYY-MM-DD.md` with the following structure:
 
 ```markdown
-# Grocery List: Week of YYYY-MM-DD
+# Grocery List — Week of YYYY-MM-DD
 
 **Meal Plan**: [meal_plan_YYYY-MM-DD.md](meal_plan_YYYY-MM-DD.md)
 **Generated**: [Date]
-**Servings**: [Number of people × 7 days]
+**Servings**: [Number of people × days]
 
 ---
 
-## Produce
+## 🏪 HEB
+### Produce
 - [ ] Item — quantity (used in: Recipe A, Recipe B)
 
-## Proteins
+### Meat & Seafood
 - [ ] Item — quantity (used in: Recipe A)
 
-## Dairy & Eggs
+### Dairy
 - [ ] Item — quantity (used in: Recipe A, Recipe C)
 
-## Pantry & Dry Goods
+### Pantry
 - [ ] Item — quantity (used in: Recipe A, Recipe B, Recipe C)
 
-## Bread & Bakery
+### Bakery
 - [ ] Item — quantity (used in: Recipe A)
 
-## Frozen
+---
+
+## 🏪 Costco (Bulk)
+### Proteins
+- [ ] Item — quantity — bulk size (used in: Recipe A)
+
+### Grains & Staples
+- [ ] Item — quantity — bulk size (used in: Recipe A, Recipe B)
+
+### Dairy & Eggs
+- [ ] Item — quantity — bulk size (used in: Recipe A)
+
+---
+
+## 🏪 Kroger
+### Specialty Items
 - [ ] Item — quantity (used in: Recipe A)
 
-## Other
-- [ ] Item — quantity (used in: Recipe A)
+### Sale Items
+- [ ] Item — quantity — check weekly ad (used in: Recipe A)
+
+---
+
+## 💡 Shopping Notes
+- Buy [items] in bulk at Costco this trip (good for X weeks)
+- Check HEB weekly ad for deals on [items]
+- [Any other relevant shopping tips]
 
 ---
 
 ## Summary
 
 - **Total unique items**: X
-- **Estimated prep time**: X minutes (based on meal plan)
-
----
-
-## Notes
-
-- [Any notes about substitutions, seasonal availability, or bulk buying tips]
+- **HEB items**: X
+- **Costco items**: X
+- **Kroger items**: X
 ```
 
 ## Output Requirements

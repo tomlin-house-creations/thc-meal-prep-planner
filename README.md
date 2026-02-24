@@ -23,6 +23,50 @@ The workflow is simple:
 
 No local setup, no dependencies, no Python, no Node.js.
 
+## Automated Meal Plan Generation
+
+### Friday Night Automation
+
+A GitHub Actions workflow (`.github/workflows/generate-meal-plan.yml`) automatically generates a new meal plan **every Friday at 9:00 PM Central Time**. It creates a GitHub Issue that triggers the `meal-planner` Copilot agent to produce a plan starting the following Saturday.
+
+The scheduled run uses these defaults:
+- **Profile**: `ashuah`
+- **Days**: `7`
+- **Constraints**: `sample_constraints`
+
+### Ad-Hoc Manual Runs
+
+You can trigger a meal plan generation at any time via the **Actions** tab:
+
+1. Navigate to **Actions → Generate Meal Plan**
+2. Click **Run workflow**
+3. Fill in the optional parameters:
+
+| Parameter | Default | Description |
+|-----------|---------|-------------|
+| `profile` | `ashuah` | Profile name from `profiles/` |
+| `days` | `7` | Number of days to plan (1–14) |
+| `constraints` | `sample_constraints` | Constraints file from `constraints/` (without `.yaml`) |
+| `start_date` | today | Start date in `YYYY-MM-DD` format |
+
+### Required Labels
+
+The workflow creates two labels automatically if they don't already exist:
+- `meal-plan` — marks issues that request a meal plan
+- `automated` — marks issues created by automated workflows
+
+### Local Store Integration (Rosharon, TX)
+
+The agents are aware of the local grocery stores. See `constraints/store-preferences.md` for full details.
+
+| Store | Role | Best For |
+|-------|------|----------|
+| **HEB** | Primary (weekly) | Fresh produce, meats, dairy, bakery, pantry staples, HEB brand & Hispanic specialty items |
+| **Costco** | Bulk (every 2–3 weeks) | Bulk proteins, bulk grains/rice/beans, large-format dairy, bulk frozen items |
+| **Kroger** | Supplementary (as needed) | Specialty items, Kroger brand alternatives, sale/coupon items |
+
+Generated grocery lists are organized by store so you can shop efficiently.
+
 ## Agents
 
 Custom agents live in `.github/agents/`. Each agent reads and writes markdown files directly in the repository.
@@ -94,10 +138,11 @@ thc-meal-prep-planner/
 │   │   └── nutrition-calculator.md
 │   ├── ISSUE_TEMPLATE/          # GitHub issue templates
 │   └── workflows/
-│       └── deploy-pages.yml     # Jekyll-based GitHub Pages deployment
+│       ├── deploy-pages.yml     # Jekyll-based GitHub Pages deployment
+│       └── generate-meal-plan.yml  # Automated Friday meal plan generation
 ├── recipes/                     # Recipe library (Markdown)
 ├── profiles/                    # User profiles and dietary preferences (Markdown)
-├── constraints/                 # Planning constraints (YAML)
+├── constraints/                 # Planning constraints (YAML) and store preferences (Markdown)
 ├── calendars/                   # Meal calendars
 ├── history/                     # Historical meal plans for variety tracking
 ├── plans/                       # Generated meal plans and grocery lists (Markdown)
