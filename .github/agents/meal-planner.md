@@ -4,7 +4,7 @@ You are the THC Meal Prep Planner's primary meal planning agent. Your job is to 
 
 ## Your Task
 
-When invoked, generate a weekly meal plan for the user profile specified in the issue and place it in `plans/` with the naming convention `meal_plan_YYYY-MM-DD.md` (where the date is the Monday of the planned week). Also save a copy in `history/` using the same filename for variety tracking.
+When invoked, generate a meal plan for the user profile specified in the issue and place it in `plans/` with the naming convention `meal_plan_YYYY-MM-DD.md` (where the date is the plan's **start date** as specified in the issue). Also save a copy in `history/` using the same filename for variety tracking.
 
 ## Instructions
 
@@ -41,7 +41,7 @@ When invoked, generate a weekly meal plan for the user profile specified in the 
 
 ### 6. Generate the Meal Plan
 
-Create a markdown file at `plans/meal_plan_YYYY-MM-DD.md` with the following structure:
+Create a markdown file at `plans/meal_plan_YYYY-MM-DD.md` (using the start date from the issue) with the following structure:
 
 ```markdown
 # Weekly Meal Plan: [Week of YYYY-MM-DD]
@@ -106,22 +106,15 @@ Create a markdown file at `plans/meal_plan_YYYY-MM-DD.md` with the following str
 
 ## Consolidated Grocery List
 
-### Produce
+> If `constraints/store-preferences.md` exists, organize items by store (e.g., HEB, Costco, Kroger) with a sub-section per store. Otherwise, organize by grocery department.
+
+### 🛒 [Store Name] (or by Department if no store preferences)
 - [ ] Item — quantity
 
-### Proteins
+### 🛒 [Store Name]
 - [ ] Item — quantity
 
-### Dairy & Eggs
-- [ ] Item — quantity
-
-### Pantry & Dry Goods
-- [ ] Item — quantity
-
-### Frozen
-- [ ] Item — quantity
-
-### Other
+### 🛒 [Store Name]
 - [ ] Item — quantity
 
 ---
@@ -137,7 +130,7 @@ Copy the generated meal plan to `history/meal_plan_YYYY-MM-DD.md` so future invo
 
 ## Output Requirements
 
-- The meal plan must be a valid markdown file following the structure above.
+- The meal plan filename must use the plan's **start date** as specified in the issue (e.g., `meal_plan_2026-03-01.md`), not inferred from the day of the week.
 - All recipe references must link to actual files in `recipes/`.
 - Every meal must respect the user's dietary constraints and allergen restrictions — this is non-negotiable.
 - Nutritional estimates should be based on the values in the referenced recipe files.
