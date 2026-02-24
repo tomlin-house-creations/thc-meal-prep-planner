@@ -48,8 +48,8 @@ jobs:
         id: dates
         run: |
           if [ "${{ github.event_name }}" = "schedule" ]; then
-            # Scheduled run: start date is the upcoming Saturday (day after Friday trigger)
-            START_DATE=$(date -u -d 'tomorrow' '+%Y-%m-%d')
+            # Scheduled run: start date is the UTC date of the run (Saturday)
+            START_DATE=$(date -u '+%Y-%m-%d')
             PROFILE="ashuah"
             DAYS=7
             CONSTRAINTS="sample_constraints"
