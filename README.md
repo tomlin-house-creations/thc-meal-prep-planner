@@ -8,7 +8,7 @@ THC Meal Prep Planner helps users plan their meals efficiently by:
 
 - 📅 Generating weekly meal plans tailored to user profiles and dietary constraints
 - 📖 Maintaining a recipe library in plain markdown
-- 🛒 Producing consolidated, department-organized grocery lists
+- 🛒 Producing consolidated, store-organized (HEB/Costco/Kroger) grocery lists
 - 📊 Tracking nutritional information against personal goals
 - 🤖 Using Copilot custom agents for all "computation" — no servers or scripts needed
 
