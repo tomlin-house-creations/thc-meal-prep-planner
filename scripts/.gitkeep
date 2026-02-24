@@ -1,8 +1,3 @@
-# Scripts
-
-This directory will contain utility scripts for data processing, imports, exports, and automation.
-
-Example structure:
-- import_recipes.py
-- export_meal_plan.py
-- generate_shopping_list.py
+# This directory is reserved for future lightweight utility scripts.
+# All meal planning, grocery list generation, and nutritional analysis
+# is handled by custom agents in .github/agents/.
