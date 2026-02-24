@@ -99,12 +99,11 @@ jobs:
 
 Please read the profile from `profiles/PROFILE_PLACEHOLDER.md`, use recipes from `recipes/`,
 apply constraints from `constraints/CONSTRAINTS_PLACEHOLDER.yaml`, check `history/` for recent
-plans, and generate the meal plan in `plans/meal_plan_START_DATE_PLACEHOLDER.md`.
+plans, and generate the meal plan in `plans/meal_plan_START_DATE_PLACEHOLDER.md` including an
+embedded **Consolidated Grocery List** section, following the meal-planner agent guidelines.
 
-Also generate a grocery list organized by store (HEB, Costco, Kroger) in
-`plans/grocery_list_START_DATE_PLACEHOLDER.md`.
-
-Refer to `constraints/store-preferences.md` for local store details (Rosharon, TX).
+Refer to `constraints/store-preferences.md` for local store details (Rosharon, TX) when preparing
+the consolidated grocery list within the meal plan.
 BODY_EOF
 )
 
