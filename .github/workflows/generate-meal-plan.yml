@@ -1,0 +1,121 @@
+name: Generate Meal Plan
+
+# NOTE: This workflow requires two labels to exist in the repository:
+#   - "meal-plan"
+#   - "automated"
+# The workflow will create them automatically if they do not exist.
+
+on:
+  schedule:
+    # Every Friday at ~9:00 PM Central Time.
+    # 0 3 * * 6 = 3:00 AM UTC Saturday = 9:00 PM CST Friday (UTC-6) / 10:00 PM CDT Friday (UTC-5).
+    - cron: '0 3 * * 6'
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 'Profile name from profiles/ directory'
+        required: false
+        default: 'ashuah'
+        type: string
+      days:
+        description: 'Number of days to plan for (1–14)'
+        required: false
+        default: '7'
+        type: string
+      constraints:
+        description: 'Constraints file from constraints/ (without .yaml extension)'
+        required: false
+        default: 'sample_constraints'
+        type: string
+      start_date:
+        description: 'Start date in YYYY-MM-DD format (leave empty for today)'
+        required: false
+        default: ''
+        type: string
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  generate-meal-plan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Calculate dates
+        id: dates
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            # Scheduled run: start date is the UTC date of the run (Saturday)
+            START_DATE=$(date -u '+%Y-%m-%d')
+            PROFILE="ashuah"
+            DAYS=7
+            CONSTRAINTS="sample_constraints"
+          else
+            # Manual run
+            PROFILE="${{ inputs.profile }}"
+            DAYS="${{ inputs.days }}"
+            CONSTRAINTS="${{ inputs.constraints }}"
+            if [ -z "${{ inputs.start_date }}" ]; then
+              START_DATE=$(date -u '+%Y-%m-%d')
+            else
+              START_DATE="${{ inputs.start_date }}"
+            fi
+          fi
+
+          END_DATE=$(date -u -d "${START_DATE} + $((DAYS - 1)) days" '+%Y-%m-%d')
+
+          echo "start_date=${START_DATE}" >> "$GITHUB_OUTPUT"
+          echo "end_date=${END_DATE}"     >> "$GITHUB_OUTPUT"
+          echo "profile=${PROFILE}"       >> "$GITHUB_OUTPUT"
+          echo "days=${DAYS}"             >> "$GITHUB_OUTPUT"
+          echo "constraints=${CONSTRAINTS}" >> "$GITHUB_OUTPUT"
+
+      - name: Ensure labels exist
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh label create "meal-plan" --color "0075ca" --description "Meal plan generation" \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+          gh label create "automated" --color "e4e669" --description "Automated workflow" \
+            --repo "${{ github.repository }}" 2>/dev/null || true
+
+      - name: Create GitHub Issue to trigger meal-planner agent
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="Generate meal plan: ${{ steps.dates.outputs.start_date }} to ${{ steps.dates.outputs.end_date }}"
+
+          BODY=$(cat <<'BODY_EOF'
+@copilot use the meal-planner agent to generate a meal plan with the following parameters:
+
+- **Profile**: PROFILE_PLACEHOLDER
+- **Days**: DAYS_PLACEHOLDER
+- **Start Date**: START_DATE_PLACEHOLDER
+- **End Date**: END_DATE_PLACEHOLDER
+- **Constraints**: CONSTRAINTS_PLACEHOLDER
+
+Please read the profile from `profiles/PROFILE_PLACEHOLDER.md`, use recipes from `recipes/`,
+apply constraints from `constraints/CONSTRAINTS_PLACEHOLDER.yaml`, check `history/` for recent
+plans, and generate the meal plan in `plans/meal_plan_START_DATE_PLACEHOLDER.md` including an
+embedded **Consolidated Grocery List** section, following the meal-planner agent guidelines.
+
+Refer to `constraints/store-preferences.md` for local store details (Rosharon, TX) when preparing
+the consolidated grocery list within the meal plan.
+BODY_EOF
+)
+
+          BODY="${BODY//PROFILE_PLACEHOLDER/${{ steps.dates.outputs.profile }}}"
+          BODY="${BODY//DAYS_PLACEHOLDER/${{ steps.dates.outputs.days }}}"
+          BODY="${BODY//START_DATE_PLACEHOLDER/${{ steps.dates.outputs.start_date }}}"
+          BODY="${BODY//END_DATE_PLACEHOLDER/${{ steps.dates.outputs.end_date }}}"
+          BODY="${BODY//CONSTRAINTS_PLACEHOLDER/${{ steps.dates.outputs.constraints }}}"
+
+          gh issue create \
+            --title "${TITLE}" \
+            --body "${BODY}" \
+            --label "meal-plan" \
+            --label "automated" \
+            --repo "${{ github.repository }}"

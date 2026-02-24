@@ -1,415 +1,146 @@
 # Code Style Guide
 
-This document defines the coding standards and style guidelines for the THC Meal Prep Planner project.
+This document defines the formatting standards for the THC Meal Prep Planner project. Since this is a markdown-first project, these standards focus on markdown and YAML formatting.
 
 ## Table of Contents
 
 - [General Principles](#general-principles)
-- [Python Style Guide](#python-style-guide)
-- [TypeScript/JavaScript Style Guide](#typescriptjavascript-style-guide)
-- [File Organization](#file-organization)
-- [Naming Conventions](#naming-conventions)
+- [Markdown Formatting](#markdown-formatting)
+- [Recipe File Standards](#recipe-file-standards)
+- [Profile File Standards](#profile-file-standards)
+- [Constraint File Standards](#constraint-file-standards)
+- [Agent Prompt Standards](#agent-prompt-standards)
 
 ## General Principles
 
-1. **Readability First**: Code is read more often than it's written
-2. **Consistency**: Follow existing patterns in the codebase
-3. **Simplicity**: Prefer simple, clear solutions over clever ones
-4. **Maintainability**: Write code that's easy to understand and modify
-5. **Documentation**: All code must be explainable and well-documented
-
-## Python Style Guide
-
-### Base Standard
-
-Follow [PEP 8](https://pep8.org/) - the official Python style guide.
+1. **Readability First**: Files are read by both humans and agents — clarity matters
+2. **Consistency**: Follow the patterns established in existing files
+3. **Completeness**: All required sections must be present
+4. **Accuracy**: Data (nutritional values, quantities, instructions) must be correct
 
-### Key Requirements
+## Markdown Formatting
 
-#### Formatting
+### Headings
 
-- **Indentation**: 4 spaces (no tabs)
-- **Line Length**: Maximum 88 characters (team choice to use Black's default, prioritizing its consistent formatting over PEP 8's 79-character limit)
-- **Blank Lines**: 
-  - 2 blank lines between top-level functions and classes
-  - 1 blank line between methods in a class
-- **Imports**: Group in order - standard library, third-party, local
-  ```python
-  import os
-  import sys
-  
-  import numpy as np
-  import pandas as pd
-  
-  from meal_planner import recipe
-  ```
-
-#### Naming Conventions
-
-- **Modules**: `lowercase_with_underscores.py`
-- **Classes**: `PascalCase`
-- **Functions/Methods**: `lowercase_with_underscores()`
-- **Variables**: `lowercase_with_underscores`
-- **Constants**: `UPPERCASE_WITH_UNDERSCORES`
-- **Private**: Prefix with single underscore `_private_method()`
-
-#### Type Hints
-
-Always use type hints for function signatures:
-
-```python
-def calculate_calories(ingredients: list[dict], servings: int) -> float:
-    """Calculate total calories for a recipe.
-    
-    Args:
-        ingredients: List of ingredient dictionaries with 'name' and 'calories'
-        servings: Number of servings
-        
-    Returns:
-        Total calories as a float
-    """
-    total = sum(item['calories'] for item in ingredients)
-    return total / servings
-```
-
-#### String Formatting
-
-Prefer f-strings for string formatting:
-
-```python
-# Good
-message = f"Recipe '{recipe_name}' serves {servings} people"
-
-# Avoid
-message = "Recipe '{}' serves {} people".format(recipe_name, servings)
-message = "Recipe '%s' serves %d people" % (recipe_name, servings)
-```
-
-#### Error Handling
-
-Be specific with exception handling:
-
-```python
-# Good
-try:
-    recipe = get_recipe(recipe_id)
-except RecipeNotFoundError as e:
-    logger.error(f"Recipe {recipe_id} not found: {e}")
-    raise
-
-# Avoid
-try:
-    recipe = get_recipe(recipe_id)
-except Exception:
-    pass
-```
-
-#### Documentation
-
-See [Documentation Standards](docs/DOCUMENTATION_STANDARDS.md) for detailed docstring requirements.
-
-### Recommended Tools
-
-- **Formatter**: [Black](https://black.readthedocs.io/)
-- **Linter**: [Ruff](https://docs.astral.sh/ruff/) or [Pylint](https://pylint.org/)
-- **Type Checker**: [mypy](http://mypy-lang.org/)
-
-## TypeScript/JavaScript Style Guide
-
-### Base Standard
-
-Follow the [Google TypeScript Style Guide](https://google.github.io/styleguide/tsguide.html) with project-specific modifications.
-
-### Key Requirements
-
-#### Formatting
-
-- **Indentation**: 2 spaces (no tabs)
-- **Line Length**: Maximum 100 characters
-- **Semicolons**: Always use semicolons
-- **Quotes**: Prefer single quotes for strings, double quotes for JSX
-  ```typescript
-  const message = 'Hello world';
-  const jsx = <div className="container">Content</div>;
-  ```
-
-#### Naming Conventions
-
-- **Files**: 
-  - Components: `PascalCase.tsx`
-  - Utilities/Services: `camelCase.ts`
-  - Types/Interfaces: `PascalCase.types.ts`
-- **Classes**: `PascalCase`
-- **Interfaces**: `PascalCase` (no "I" prefix)
-- **Types**: `PascalCase`
-- **Functions**: `camelCase`
-- **Variables**: `camelCase`
-- **Constants**: `UPPER_SNAKE_CASE`
-- **Private**: Prefix with `#` (private fields) or `_` (by convention)
-
-#### Type Annotations
-
-Always use TypeScript types, avoid `any`:
-
-```typescript
-// Good
-interface Recipe {
-  id: string;
-  name: string;
-  ingredients: Ingredient[];
-  servings: number;
-}
-
-function calculateCalories(recipe: Recipe): number {
-  return recipe.ingredients.reduce((sum, ing) => sum + ing.calories, 0);
-}
-
-// Avoid
-function calculateCalories(recipe: any): any {
-  return recipe.ingredients.reduce((sum, ing) => sum + ing.calories, 0);
-}
-```
-
-#### Interfaces vs Types
-
-- Prefer `interface` for object shapes
-- Use `type` for unions, intersections, and primitives
-
-```typescript
-// Interfaces for objects
-interface MealPlan {
-  id: string;
-  meals: Meal[];
-}
-
-// Types for unions and primitives
-type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
-type RecipeId = string;
-```
-
-#### Arrow Functions
-
-Prefer arrow functions for callbacks and short functions:
-
-```typescript
-// Good
-const filterVegetarian = recipes.filter(recipe => recipe.isVegetarian);
-
-// For longer functions with multiple statements
-const processRecipe = (recipe: Recipe): ProcessedRecipe => {
-  const scaled = scaleIngredients(recipe);
-  const validated = validateNutrition(scaled);
-  return validated;
-};
-```
-
-#### Async/Await
-
-Prefer async/await over raw promises:
-
-```typescript
-// Good
-async function fetchRecipe(id: string): Promise<Recipe> {
-  try {
-    const response = await fetch(`/api/recipes/${id}`);
-    return await response.json();
-  } catch (error) {
-    logger.error('Failed to fetch recipe', error);
-    throw error;
-  }
-}
-
-// Avoid nested promises
-function fetchRecipe(id: string): Promise<Recipe> {
-  return fetch(`/api/recipes/${id}`)
-    .then(response => response.json())
-    .then(data => processData(data))
-    .catch(error => handleError(error));
-}
-```
-
-#### Documentation
-
-Use JSDoc for all public functions, classes, and interfaces:
-
-```typescript
-/**
- * Calculates the nutritional information for a meal plan.
- * 
- * @param {MealPlan} plan - The meal plan to analyze
- * @param {NutritionOptions} options - Optional configuration for calculation
- * @returns {NutritionInfo} Nutritional breakdown by category
- * @throws {ValidationError} If the meal plan is invalid
- */
-function calculateNutrition(
-  plan: MealPlan,
-  options?: NutritionOptions
-): NutritionInfo {
-  // Implementation
-}
-```
-
-See [Documentation Standards](docs/DOCUMENTATION_STANDARDS.md) for detailed requirements.
-
-### React/TSX Specific
-
-#### Component Structure
-
-```typescript
-interface RecipeCardProps {
-  recipe: Recipe;
-  onSelect?: (recipe: Recipe) => void;
-}
-
-/**
- * Displays a recipe card with basic information.
- */
-export function RecipeCard({ recipe, onSelect }: RecipeCardProps) {
-  const handleClick = () => {
-    onSelect?.(recipe);
-  };
-
-  return (
-    <div className="recipe-card" onClick={handleClick}>
-      <h3>{recipe.name}</h3>
-      <p>{recipe.description}</p>
-    </div>
-  );
-}
-```
-
-#### Hooks
-
-- Use `use` prefix for custom hooks
-- Keep hooks at the top of the component
-- Extract complex logic into custom hooks
-
-```typescript
-function useMealPlan(planId: string) {
-  const [plan, setPlan] = useState<MealPlan | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadMealPlan(planId).then(setPlan).finally(() => setLoading(false));
-  }, [planId]);
-
-  return { plan, loading };
-}
-```
-
-### Recommended Tools
-
-- **Formatter**: [Prettier](https://prettier.io/)
-- **Linter**: [ESLint](https://eslint.org/)
-- **Type Checker**: TypeScript compiler (`tsc`)
-
-## File Organization
-
-### Directory Structure
-
-```
-project/
-├── src/              # Source code
-│   ├── components/   # React components
-│   ├── services/     # Business logic and API calls
-│   ├── utils/        # Utility functions
-│   ├── types/        # TypeScript type definitions
-│   └── styles/       # CSS/SCSS files
-├── tests/            # Test files (mirror src structure)
-├── docs/             # Documentation
-└── scripts/          # Build and utility scripts
-```
-
-### Module Organization
-
-- One class/component per file
-- Group related functionality
-- Keep files focused and concise (< 300 lines when possible)
-
-## Naming Conventions
-
-### Be Descriptive
-
-```python
-# Good
-def calculate_total_calories(recipes: list[Recipe]) -> float:
-    pass
-
-# Avoid
-def calc(r: list) -> float:
-    pass
-```
-
-### Use Domain Language
-
-Use terminology from the meal prep/planning domain:
-
-```typescript
-// Good
-interface Recipe {
-  servings: number;
-  prepTime: number;
-  cookTime: number;
-}
-
-// Avoid generic terms
-interface Item {
-  count: number;
-  time1: number;
-  time2: number;
-}
-```
-
-### Boolean Variables
-
-Prefix with `is`, `has`, `should`, `can`:
-
-```python
-is_vegetarian = True
-has_allergens = False
-should_scale_recipe = True
-can_prepare = check_ingredients()
-```
-
-## Comments
-
-### When to Comment
-
-- **DO**: Explain **why** something is done
-- **DON'T**: Explain **what** the code does (code should be self-explanatory)
-
-```python
-# Good - explains why
-# Use exponential backoff to avoid overwhelming the API
-retry_delay = base_delay * (2 ** attempt)
-
-# Bad - just repeats what code says
-# Multiply base_delay by 2 to the power of attempt
-retry_delay = base_delay * (2 ** attempt)
-```
-
-### Complex Logic
-
-Add comments for complex algorithms or business rules:
-
-```typescript
-// Complex nutrition calculation based on FDA guidelines
-// See: https://www.fda.gov/food/nutrition-facts-label/daily-value
-function calculateDailyValue(nutrient: number, type: NutrientType): number {
-  // Implementation
-}
-```
-
-## Code Review Focus Areas
-
-When reviewing code, pay attention to:
-
-1. Adherence to this style guide
-2. Code readability and maintainability
-3. Appropriate documentation
-4. Consistent naming conventions
-5. Proper error handling
-6. Type safety (TypeScript) or type hints (Python)
+- Use ATX-style headings (`#`, `##`, `###`) — not underline style
+- One blank line before and after each heading
+- Use sentence case for headings (capitalize only the first word and proper nouns)
+
+### Lists
+
+- Use `-` for unordered list items (not `*` or `+`)
+- Use `1.` for ordered list items (numbered steps)
+- One blank line before and after a list block when it follows a paragraph
+
+### Tables
+
+- Always include a header row and separator row
+- Align separator dashes with column width for readability
+- Left-align text columns; right-align number columns where appropriate
+
+### Links
+
+- Use relative links for files within the repository: `[Recipe Name](../recipes/recipe-file.md)`
+- Use descriptive link text — never bare URLs as link text
+
+### Checkboxes
+
+- Use `- [ ]` for unchecked items and `- [x]` for checked items
+- Grocery lists and checklists should always use checkboxes
+
+### Code Blocks
+
+- Use fenced code blocks with a language identifier when applicable
+- Use inline code (backticks) for file paths, command names, and values
+
+## Recipe File Standards
+
+All recipe files in `recipes/` must follow the structure established in `recipes/breakfast-burritos.md`.
+
+### Required Sections (in order)
+
+1. `# Recipe Name` — H1 title, matches the filename (kebab-case → Title Case)
+2. `## Recipe Information` — Category, Servings, Prep Time, Cook Time, Total Time, Difficulty
+3. `## Tags` — Bullet list of relevant tags
+4. `## Description` — 2–4 sentence description
+5. `## Ingredients` — Grouped by component with precise measurements
+6. `## Instructions` — Numbered steps (`### Step N: ...`)
+7. `## Nutritional Information (per serving)` — All required nutrients
+8. `## Dietary Information` — Vegetarian, Vegan, Gluten-Free, Dairy-Free, Nut-Free
+9. `## Variations` — At least 2–3 variations or substitutions
+10. `## Storage and Reheating` — Refrigeration, freezing, and reheating
+11. `## Tips and Notes` — Practical tips
+12. `## Serving Suggestions` — How to serve and pair
+
+### File Naming
+
+- Use kebab-case: `chicken-tikka-masala.md`, `overnight-oats.md`
+- Keep names concise and descriptive
+- No dates or version numbers in filenames
+
+### Nutritional Values
+
+All nutritional sections must include (per serving):
+- Calories (kcal)
+- Protein (g)
+- Carbohydrates (g)
+- Fat (g)
+- Fiber (g)
+- Sodium (mg)
+- Sugar (g)
+
+### Tags
+
+Use consistent tag vocabulary. Common tags:
+
+| Category   | Tags |
+|------------|------|
+| Meal type  | `breakfast`, `lunch`, `dinner`, `snack`, `dessert` |
+| Dietary    | `vegetarian`, `vegan`, `gluten-free`, `dairy-free`, `nut-free`, `low-sodium`, `high-protein` |
+| Prep style | `meal-prep-friendly`, `freezer-friendly`, `one-pot`, `sheet-pan`, `no-cook` |
+| Time       | `30-minutes-or-less`, `under-1-hour` |
+| Audience   | `kid-friendly`, `family-friendly` |
+| Difficulty | `easy`, `intermediate`, `advanced` |
+
+## Profile File Standards
+
+Profile files in `profiles/` should follow the structure in `profiles/ashuah.md`.
+
+### Required Sections
+
+- `## Basic Information` — Name, creation/update dates
+- `## Dietary Constraints` — Hard restrictions (allergies, medical requirements)
+- `## Dietary Preferences` — Preferred cuisines, excluded ingredients, serving size
+- `## Nutritional Goals` — Daily macro targets
+- `## Preferences` — Meal type preferences, cooking constraints, flavor preferences
+- `## Allergen Information` — Allergies, intolerances, cross-contamination concerns
+
+## Constraint File Standards
+
+Constraint files in `constraints/` are YAML. Follow the schema documented in [docs/CONSTRAINT_SCHEMAS.md](docs/CONSTRAINT_SCHEMAS.md).
+
+- Use 2-space indentation
+- Add comments (`#`) to explain non-obvious constraint values
+- Group related constraints under logical keys
+
+## Agent Prompt Standards
+
+Agent definition files in `.github/agents/` are markdown files that instruct Copilot agents.
+
+### Structure
+
+Each agent file should include:
+1. A brief description of the agent's role
+2. **Your Task** section — what the agent produces
+3. **Instructions** section — numbered steps the agent must follow
+4. **Output Requirements** section — format, quality, and commit requirements
+
+### Writing Style
+
+- Use imperative language ("Read the profile", "Generate a markdown file")
+- Be explicit about file paths and naming conventions
+- Provide example output structures using fenced code blocks
+- State non-negotiable requirements clearly (e.g., allergen compliance)
 
 ## Questions or Suggestions?
 

@@ -27,9 +27,8 @@ assignees: ''
 ## Environment
 
 - OS: [e.g., Windows 10, macOS 12, Ubuntu 22.04]
-- Python Version: [e.g., 3.9.5]
-- Node.js Version: [e.g., 18.0.0]
 - Browser (if applicable): [e.g., Chrome 120, Firefox 121]
+- Agent (if applicable): [e.g., meal-planner, recipe-creator]
 
 ## Screenshots
 
