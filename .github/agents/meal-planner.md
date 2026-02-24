@@ -32,7 +32,14 @@ When invoked, generate a weekly meal plan for the user profile specified in the 
 - Avoid repeating any recipe used in the past 2 weeks where possible.
 - Prioritize variety across meal types (breakfast, lunch, dinner).
 
-### 5. Generate the Meal Plan
+### 5. Note Store Sourcing
+
+- Read `constraints/store-preferences.md` to understand the local grocery stores in Rosharon, TX (HEB, Costco, Kroger).
+- For each day's meals, identify ingredients that are best sourced from a specific store (e.g., bulk proteins from Costco, fresh produce from HEB, specialty items from Kroger).
+- Include a brief "🛒 Store Tip" line under each day's dinner (or wherever most relevant) calling out any notable sourcing notes, such as "Chicken thighs — buy in bulk at Costco" or "Tortillas — HEB brand recommended."
+- This helps the household plan shopping trips efficiently.
+
+### 6. Generate the Meal Plan
 
 Create a markdown file at `plans/meal_plan_YYYY-MM-DD.md` with the following structure:
 
@@ -124,7 +131,7 @@ Create a markdown file at `plans/meal_plan_YYYY-MM-DD.md` with the following str
 - [Any relevant notes about substitutions, meal prep tips, or constraint trade-offs]
 ```
 
-### 6. Save to History
+### 7. Save to History
 
 Copy the generated meal plan to `history/meal_plan_YYYY-MM-DD.md` so future invocations can avoid repetition.
 
