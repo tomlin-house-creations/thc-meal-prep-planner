@@ -88,8 +88,10 @@ jobs:
         run: |
           TITLE="Generate meal plan: ${{ steps.dates.outputs.start_date }} to ${{ steps.dates.outputs.end_date }}"
 
+          # NOTE: @mentions must be escaped as \@ in heredocs to avoid GitHub Actions YAML
+          # validation errors. The substitution below restores the literal @ before issue creation.
           BODY=$(cat <<'BODY_EOF'
-@copilot use the meal-planner agent to generate a meal plan with the following parameters:
+\@copilot use the meal-planner agent to generate a meal plan with the following parameters:
 
 - **Profile**: PROFILE_PLACEHOLDER
 - **Days**: DAYS_PLACEHOLDER
@@ -107,6 +109,7 @@ the consolidated grocery list within the meal plan.
 BODY_EOF
 )
 
+          BODY="${BODY//\\@/@}"
           BODY="${BODY//PROFILE_PLACEHOLDER/${{ steps.dates.outputs.profile }}}"
           BODY="${BODY//DAYS_PLACEHOLDER/${{ steps.dates.outputs.days }}}"
           BODY="${BODY//START_DATE_PLACEHOLDER/${{ steps.dates.outputs.start_date }}}"
