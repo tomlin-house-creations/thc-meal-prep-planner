@@ -98,6 +98,30 @@ test/description     - Test additions
 
 **Types**: `feat`, `fix`, `docs`, `style`, `refactor`, `test`, `chore`
 
+## ⚙️ GitHub Actions Workflow Conventions
+
+### Escaping `@mentions` in Heredocs
+
+GitHub Actions' YAML validator rejects bare `@` characters that begin a line inside a `run:` block,
+even when they appear inside a bash heredoc. **Always escape `@mentions` as `\@`** in heredoc
+bodies, then restore the literal `@` with a string substitution before using the variable.
+
+**Pattern:**
+
+```yaml
+run: |
+  # NOTE: @mentions must be escaped as \@ in heredocs to avoid GitHub Actions YAML
+  # validation errors. The substitution below restores the literal @ before use.
+  BODY=$(cat <<'BODY_EOF'
+\@username or \@copilot mention here
+BODY_EOF
+)
+  BODY="${BODY//\\@/@}"
+```
+
+This applies to any `@mention` (`@copilot`, `@username`, etc.) that would appear at the start of a
+line or elsewhere in a heredoc inside a GitHub Actions workflow `run:` step.
+
 ## 🧪 Testing Standards
 
 - **CI Testing**: Not required
